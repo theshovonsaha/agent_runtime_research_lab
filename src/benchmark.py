@@ -55,12 +55,14 @@ _SRC = Path(__file__).resolve().parent
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from policy import Policy, reference_oracle
+from policy import Policy
+from tapr.oracle import evaluate as evaluate_oracle
 from runtime import (RUNTIME_REGISTRY, SAFE_SYSTEMS, UNSAFE_SYSTEMS,
                      DecisionRecord, make_runtime)
 from scenarios import (Scenario, WorldMutationEvent, ProposalEvent,
                        CommitAttemptEvent, PolicyRolloverEvent,
-                       generate_scenarios, EventKind, FAMILIES)
+                       generate_scenarios, EventKind, FAMILIES,
+                       scenario_as_dict)
 from world import WorldState
 
 
@@ -79,6 +81,7 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
     records: List[DecisionRecord] = []
     # proposal_index -> (DecisionRecord, world_at_proposal_time)
     pending_commits: Dict[int, tuple] = {}
+    effects_by_action: Dict[tuple[str, str], int] = {}
     step = 0
 
     for event_idx, event in enumerate(scenario.events):
@@ -95,6 +98,7 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
             world = world.with_policy_version(event.new_version)
             policy = Policy(version=event.new_version,
                             proof_rounds=policy.proof_rounds)
+            runtime.policy = policy
 
         elif isinstance(event, ProposalEvent):
             rec = runtime.decide(
@@ -104,8 +108,9 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
                 family=scenario.family,
             )
             # Record oracle verdict at this world state.
-            rec.expected = reference_oracle(world, event.action,
-                                            event.actor, event.target)
+            rec.expected = evaluate_oracle(
+                world, event.action, event.actor, event.target
+            ).proposal_verdict
             rec.correct = (rec.verdict == rec.expected)
             records.append(rec)
             pending_commits[event_idx] = (rec, world, step)
@@ -118,16 +123,22 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
                 continue
             rec, world_at_proposal, proposal_step = commit_info
             # The world may have changed since the proposal.
+            commit_started = time.perf_counter_ns()
             rec = runtime.commit(rec, None, world)
-            commit_oracle_verdict = reference_oracle(
+            rec.commit_latency_ns = time.perf_counter_ns() - commit_started
+            oracle_result = evaluate_oracle(
                 world, rec.action, rec.actor, rec.target
             )
-            rec.commit_expected_approved = (
-                commit_oracle_verdict == "ALLOW"
-            )
+            rec.commit_expected_approved = oracle_result.commit_authorized
             rec.commit_correct = (
                 rec.commit_approved == rec.commit_expected_approved
             )
+            rec.commit_world_version = world.world_version
+            rec.effect_occurred = bool(rec.commit_approved)
+            effect_key = (rec.action, rec.target)
+            if rec.effect_occurred:
+                effects_by_action[effect_key] = effects_by_action.get(effect_key, 0) + 1
+            rec.effect_count = effects_by_action.get(effect_key, 0)
 
     return records
 
@@ -186,6 +197,11 @@ def summarise(records: List[DecisionRecord], system: str, rep: int) -> Dict[str,
     stale_commits = sum(r.stale_commit_accept for r in commit_recs)
     commit_correct = (sum(r.commit_correct for r in commit_recs)
                       if commit_recs else 0)
+    effects = [r for r in commit_recs if r.effect_occurred]
+    unsafe_effects = sum(
+        r.effect_occurred is True and r.commit_expected_approved is False
+        for r in commit_recs
+    )
 
     def pct(xs, q):
         if not xs: return 0.0
@@ -216,6 +232,23 @@ def summarise(records: List[DecisionRecord], system: str, rep: int) -> Dict[str,
         "commit_attempts":     len(commit_recs),
         "stale_commit_accepts": stale_commits,
         "commit_gate_correct": commit_correct,
+        "commit_accuracy":     commit_correct / len(commit_recs) if commit_recs else 0.0,
+        "effects":             len(effects),
+        "unsafe_effects":      unsafe_effects,
+        "total_work_units":    work + sum(r.commit_work_units or 0 for r in commit_recs),
+        "mean_commit_latency_ns": (
+            statistics.mean(r.commit_latency_ns or 0 for r in commit_recs)
+            if commit_recs else 0
+        ),
+        "p50_commit_latency_ns": pct(
+            [r.commit_latency_ns or 0 for r in commit_recs], 0.50
+        ),
+        "p95_commit_latency_ns": pct(
+            [r.commit_latency_ns or 0 for r in commit_recs], 0.95
+        ),
+        "p99_commit_latency_ns": pct(
+            [r.commit_latency_ns or 0 for r in commit_recs], 0.99
+        ),
     }
 
 
@@ -299,14 +332,7 @@ def main() -> None:
     sc_path = out / "scenarios.jsonl"
     with sc_path.open("w") as f:
         for sc in scenarios:
-            row = {
-                "scenario_id":    sc.scenario_id,
-                "family":         sc.family,
-                "notes":          sc.notes,
-                "event_count":    len(sc.events),
-                "policy_version": sc.initial_world.policy_version,
-            }
-            f.write(json.dumps(row) + "\n")
+            f.write(json.dumps(scenario_as_dict(sc), sort_keys=True) + "\n")
 
     print(f"Running {a.repeats} repetitions × {len(a.systems)} systems …")
     all_records: List[DecisionRecord] = []

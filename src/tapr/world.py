@@ -163,10 +163,10 @@ class WorldState:
 
     def fingerprint_all(self) -> str:
         """Hash of the complete world state (exact-snapshot cache key)."""
-        items = {
-            f"{k[0]}:{k[1]}": (v.value, v.version)
-            for k, v in sorted(self.facts.items())
-        }
+        items = [
+            [name, subject, fact.value, fact.version]
+            for (name, subject), fact in sorted(self.facts.items())
+        ]
         blob = json.dumps({
             "facts": items,
             "path": [(e.action, e.actor, e.target, e.outcome, e.timestamp)
@@ -181,11 +181,11 @@ class WorldState:
         Used by the TAPR cache: the key covers only declared dependencies,
         so irrelevant metadata changes do not invalidate the proof.
         """
-        items = {}
+        items = []
         for k in keys:
             f = self.facts.get(k)
             if f is not None:
-                items[f"{k[0]}:{k[1]}"] = (f.value, f.version)
+                items.append([k[0], k[1], f.value, f.version])
         blob = json.dumps({
             "facts": items,
             "path": [(e.action, e.actor, e.target, e.outcome, e.timestamp)

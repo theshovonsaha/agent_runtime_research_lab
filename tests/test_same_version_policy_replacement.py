@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from tapr.world import WorldBuilder
-from tapr.policy import Policy, PolicyResult
+from tapr.policy import Dependency, Policy, PolicyResult
 from tapr.proof import Proof, CheckCommitGate
 
 
@@ -35,7 +35,15 @@ def test_same_version_different_policy_rules_do_not_reuse_old_allow_proof():
     policy_b = Policy(version=7)
     policy_b._rules = [
         lambda world, action, actor, target: PolicyResult(
-            "DENY", frozenset(), 0, "replacement_policy_deny"
+            "DENY",
+            frozenset({
+                Dependency.from_fact(world.facts[("authorized", actor)]),
+                Dependency.from_fact(
+                    world.facts[("parent_scope_ok", actor)]
+                ),
+            }),
+            0,
+            "authorization",
         )
     ]
 
@@ -49,5 +57,5 @@ def test_same_version_different_policy_rules_do_not_reuse_old_allow_proof():
 
     # The replacement policy denies, so accepting the old ALLOW is unsafe.
     assert decision.approved is False
-    assert decision.reason == "policy_identity_mismatch"
-    assert decision.proof.verdict == "ALLOW"
+    assert decision.reason == "recomputed"
+    assert decision.proof.verdict == "DENY"

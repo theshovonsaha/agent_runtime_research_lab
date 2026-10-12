@@ -111,13 +111,24 @@ def _vals(rows: List[Dict], system: str, field: str) -> List[float]:
             if r["system"] == system and not math.isnan(_num(r.get(field, "nan")))]
 
 
-def _mean_ci(xs: List[float], z: float = 1.96) -> tuple[float, float]:
-    """Return (mean, half_width) for a 95% CI using t-distribution approx."""
+def _mean_ci(xs: List[float]) -> tuple[float, float]:
+    """Return mean and two-sided 95% Student-t half-width over run replicates."""
     if len(xs) < 2:
         return (xs[0] if xs else 0.0, 0.0)
+    t_critical_95 = (
+        0.0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306,
+        2.262, 2.228, 2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110,
+        2.101, 2.093, 2.086, 2.080, 2.074, 2.069, 2.064, 2.060, 2.056,
+        2.052, 2.048, 2.045, 2.042,
+    )
     m = statistics.mean(xs)
     s = statistics.stdev(xs)
-    hw = z * s / math.sqrt(len(xs))
+    degrees_freedom = len(xs) - 1
+    critical = (
+        t_critical_95[degrees_freedom]
+        if degrees_freedom < len(t_critical_95) else 1.96
+    )
+    hw = critical * s / math.sqrt(len(xs))
     return m, hw
 
 
@@ -204,7 +215,7 @@ def chart_latency_ci(rows, systems, out):
     ax.set_xticklabels([_label(s) for s in systems],
                        rotation=25, ha="right", fontsize=9)
     ax.set_ylabel("Mean decision latency (μs)")
-    ax.set_title("Latency with 95% CI across repeated runs",
+    ax.set_title("Latency with 95% Student-t CI across run replicates",
                  loc="left", fontweight="bold", pad=12)
     ax.grid(alpha=0.25)
     ax.spines["top"].set_visible(False)
@@ -351,8 +362,8 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         "",
         "## Results",
         "",
-        "| System | Accuracy | Unsafe ✗ | Cache hit | Full evals | Lat μs |",
-        "|--------|----------|----------|-----------|------------|--------|",
+        "| System | Proposal accuracy | Unsafe ALLOW | Commit accuracy | Stale accepts | Effects | Unsafe effects | Cache hit | Full evals | Work units | Proposal mean μs | Commit p95 μs |",
+        "|--------|-------------------:|-------------:|----------------:|---------------:|--------:|---------------:|----------:|-----------:|-----------:|-----------------:|--------------:|",
     ]
 
     for s in systems:
@@ -361,11 +372,65 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         hit  = statistics.mean(_vals(rows, s, "cache_hit_rate")  or [0])
         work = statistics.mean(_vals(rows, s, "full_evaluations") or [0])
         lat  = statistics.mean(_vals(rows, s, "mean_latency_ns") or [0]) / 1_000
+        commit_acc = statistics.mean(
+            _vals(rows, s, "commit_accuracy") or [0]
+        )
+        stale = statistics.mean(
+            _vals(rows, s, "stale_commit_accepts") or [0]
+        )
+        effects = statistics.mean(_vals(rows, s, "effects") or [0])
+        unsafe_effects = statistics.mean(
+            _vals(rows, s, "unsafe_effects") or [0]
+        )
+        work_units = statistics.mean(
+            _vals(rows, s, "total_work_units") or [0]
+        )
+        commit_p95 = statistics.mean(
+            _vals(rows, s, "p95_commit_latency_ns") or [0]
+        ) / 1_000
         tag  = " ⚠" if s in UNSAFE_SYSTEMS else ""
         lines.append(
             f"| {_label(s)}{tag} | {acc:.1%} | {uns:.1f} | "
-            f"{hit:.1%} | {work:.0f} | {lat:.2f} |"
+            f"{commit_acc:.1%} | {stale:.1f} | {effects:.1f} | "
+            f"{unsafe_effects:.1f} | {hit:.1%} | {work:.0f} | "
+            f"{work_units:.1f} | {lat:.2f} | {commit_p95:.2f} |"
         )
+
+    lines += [
+        "",
+        "Proposal accuracy and commit-boundary correctness are separate outcomes. "
+        "An effect is counted only when the simulated effect counter is incremented "
+        "after the runtime approves the commit; this is not an external adapter.",
+        "",
+        "Uncertainty intervals use the two-sided 95% Student-t interval over "
+        "independent benchmark repetitions. The sample unit is a repetition-level "
+        "aggregate for a system (not an individual decision); intervals with few "
+        "repetitions are correspondingly wide and should not be interpreted as "
+        "population guarantees.",
+        "",
+        "## Falsifiable question and hypotheses",
+        "",
+        "Question: under the same typed scenario history and policy, can explicit "
+        "dependency-aware proof reuse preserve proposal and commit decisions while "
+        "reducing measured work relative to full recomputation?",
+        "",
+        "- H1: TAPR proposal decisions agree with the state-only reference evaluator.",
+        "- H2: no stale authorization produces an approved commit/effect after a "
+        "relevant state transition.",
+        "- H3: proof reuse reduces work only in workload regimes with reusable "
+        "dependencies; it may lose at low reuse or when validation overhead dominates.",
+        "",
+        "## Replication metadata",
+        "",
+        f"- Metric rows: {len(rows)}; systems: {len(systems)}.",
+        f"- Run repetitions per system: {max((len(_vals(rows, s, 'accuracy')) for s in systems), default=0)} "
+        "(independent sample unit).",
+        "- Use the adjacent `manifest.json` for the exact source revision, worktree "
+        "status, versions, configuration, and raw artifact checksums.",
+        "- Reproduce with `./reproduce_research.sh --seed <recorded-seed>`; "
+        "outputs are written to a new timestamped directory.",
+        "",
+    ]
 
     lines += [
         "",

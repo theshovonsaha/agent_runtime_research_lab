@@ -34,6 +34,8 @@ PolicyRolloverEvent     Increments the active policy version.
 from __future__ import annotations
 
 import random
+from dataclasses import fields
+import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, List, Optional, Sequence, Tuple
@@ -110,6 +112,50 @@ class Scenario:
     notes: str = ""
 
 
+def scenario_as_dict(scenario: Scenario) -> dict:
+    """Serialize the complete generated input for replay and failure triage."""
+    return {
+        "scenario_id": scenario.scenario_id,
+        "family": scenario.family,
+        "notes": scenario.notes,
+        "initial_world": {
+            "facts": [
+                {
+                    "name": fact.name,
+                    "subject": fact.subject,
+                    "value": fact.value,
+                    "version": fact.version,
+                    "provenance": fact.provenance,
+                }
+                for _, fact in sorted(scenario.initial_world.facts.items())
+            ],
+            "path": [
+                {
+                    "action": effect.action,
+                    "actor": effect.actor,
+                    "target": effect.target,
+                    "outcome": effect.outcome,
+                    "timestamp": effect.timestamp,
+                }
+                for effect in scenario.initial_world.path
+            ],
+            "world_version": scenario.initial_world.world_version,
+            "policy_version": scenario.initial_world.policy_version,
+        },
+        "events": [
+            {
+                "type": type(event).__name__,
+                **{
+                    field.name: getattr(event, field.name)
+                    for field in fields(event)
+                    if field.name != "kind"
+                },
+            }
+            for event in scenario.events
+        ],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Scenario families
 # ---------------------------------------------------------------------------
@@ -138,7 +184,7 @@ def _base_world(rng: random.Random, actor: str, target: str,
 
 
 def _simple_authorization(rng: random.Random, sid: str) -> Scenario:
-    from .policy import reference_oracle
+    from .oracle import evaluate as evaluate_oracle
     actor  = rng.choice(ACTORS)
     target = rng.choice(TARGETS)
     action = rng.choice(("read", "write", "delete", "export"))
@@ -147,9 +193,9 @@ def _simple_authorization(rng: random.Random, sid: str) -> Scenario:
         ProposalEvent(action=action, actor=actor, target=target),
         CommitAttemptEvent(
             proposal_index=0,
-            expected_approved=(
-                reference_oracle(world, action, actor, target) == "ALLOW"
-            ),
+            expected_approved=evaluate_oracle(
+                world, action, actor, target
+            ).commit_authorized,
         ),
     ]
     return Scenario(sid, "authorization", events, world,
@@ -451,6 +497,55 @@ def _dependency_fan_out(rng: random.Random, sid: str) -> Scenario:
                     notes=f"mutation of {changed_fact[0]} must invalidate proof")
 
 
+def _concurrent_mutation(rng: random.Random, sid: str) -> Scenario:
+    actor = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    world = _base_world(rng, actor, target)
+    mutations = rng.choice([
+        [("authorized", actor, False, "concurrent_revocation")],
+        [("evidence_fresh", target, False, "concurrent_expiry")],
+        [("approval", actor, False, "concurrent_approval_change")],
+    ])
+    events: List[Event] = [
+        ProposalEvent(action="write", actor=actor, target=target),
+        WorldMutationEvent(
+            mutations=mutations,
+            reason="deterministic mutation in the proposal/commit gap",
+        ),
+        CommitAttemptEvent(proposal_index=0),
+    ]
+    return Scenario(
+        sid, "concurrent_mutation", events, world,
+        notes=f"pre-commit state change: {mutations[0][0]}",
+    )
+
+
+def _resource_substitution(rng: random.Random, sid: str) -> Scenario:
+    actor = rng.choice(ACTORS)
+    allowed_target = "resource-substitution-allowed"
+    protected_target = "resource-substitution-protected"
+    builder = WorldBuilder()
+    builder.set("authorized", actor, True)
+    builder.set("parent_scope_ok", actor, True)
+    builder.set("approval", actor, True)
+    builder.set("protected", allowed_target, False)
+    builder.set("retention_hold", allowed_target, False)
+    builder.set("evidence_fresh", allowed_target, True)
+    builder.set("protected", protected_target, True)
+    builder.set("retention_hold", protected_target, False)
+    builder.set("evidence_fresh", protected_target, True)
+    world = builder.build()
+    events: List[Event] = [
+        ProposalEvent(action="delete", actor=actor, target=allowed_target),
+        ProposalEvent(action="delete", actor=actor, target=protected_target),
+        CommitAttemptEvent(proposal_index=1),
+    ]
+    return Scenario(
+        sid, "resource_substitution", events, world,
+        notes="same actor/action against a newly substituted protected resource",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Scenario generator
 # ---------------------------------------------------------------------------
@@ -466,6 +561,8 @@ _FAMILY_BUILDERS = {
     "delegation_chain":    _delegation_chain,
     "policy_rollover":     _policy_rollover,
     "dependency_fan_out":  _dependency_fan_out,
+    "concurrent_mutation": _concurrent_mutation,
+    "resource_substitution": _resource_substitution,
 }
 
 FAMILIES = list(_FAMILY_BUILDERS.keys())
@@ -511,12 +608,14 @@ def replay_scenario(scenario, runtime, policy, rep=0):
     Returns one DecisionRecord per ProposalEvent.
     Policy rollover updates both the local policy and runtime policy.
     """
-    from .policy import Policy, reference_oracle
+    from .policy import Policy
+    from .oracle import evaluate as evaluate_oracle
 
     runtime.reset()
     world = scenario.initial_world
     records = []
     pending_commits = {}
+    effects_by_action = {}
 
     step = 0
 
@@ -547,9 +646,9 @@ def replay_scenario(scenario, runtime, policy, rep=0):
                 family=scenario.family,
             )
 
-            record.expected = reference_oracle(
+            record.expected = evaluate_oracle(
                 world, event.action, event.actor, event.target
-            )
+            ).proposal_verdict
             record.correct = record.verdict == record.expected
 
             records.append(record)
@@ -562,11 +661,20 @@ def replay_scenario(scenario, runtime, policy, rep=0):
                 continue
 
             record, world_at_proposal, proposal_step = commit_info
+            commit_started = time.perf_counter_ns()
             runtime.commit(record, None, world)
-
-            record.commit_expected_approved = event.expected_approved
+            record.commit_latency_ns = time.perf_counter_ns() - commit_started
+            record.commit_expected_approved = evaluate_oracle(
+                world, record.action, record.actor, record.target
+            ).commit_authorized
             record.commit_correct = (
-                record.commit_approved == event.expected_approved
+                record.commit_approved == record.commit_expected_approved
             )
+            record.commit_world_version = world.world_version
+            record.effect_occurred = bool(record.commit_approved)
+            effect_key = (record.action, record.target)
+            if record.effect_occurred:
+                effects_by_action[effect_key] = effects_by_action.get(effect_key, 0) + 1
+            record.effect_count = effects_by_action.get(effect_key, 0)
 
     return records

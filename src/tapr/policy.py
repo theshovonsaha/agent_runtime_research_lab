@@ -130,6 +130,11 @@ class PolicyResult:
         )
 
 
+class DependencyContractError(ValueError):
+    """Raised when a result omits a semantic input required for safe reuse."""
+
+
+
 # ---------------------------------------------------------------------------
 # Policy rules
 # ---------------------------------------------------------------------------
@@ -225,23 +230,13 @@ def _policy_rules() -> List[Any]:
         return None
 
     def r_allow(world, action, actor, target):
-        """Default allow — collects all major fact dependencies for completeness."""
-        auth = _require_fact(world, "authorized", actor)
-        scope = _require_fact(world, "parent_scope_ok", actor)
-        prot = _require_fact(world, "protected", target)
-        hold = _require_fact(world, "retention_hold", target)
-        appr = _require_fact(world, "approval", actor)
-        evid = _require_fact(world, "evidence_fresh", target)
-        sens = _require_fact(world, "prior_sensitive_read", actor)
-        prev = _require_fact(world, "prior_effect_succeeded", target)
-        tag = _require_fact(world, "path_tag", actor)
-        deps = frozenset([
-            Dependency.from_fact(auth), Dependency.from_fact(scope),
-            Dependency.from_fact(prot), Dependency.from_fact(hold),
-            Dependency.from_fact(appr), Dependency.from_fact(evid),
-            Dependency.from_fact(sens), Dependency.from_fact(prev),
-            Dependency.from_fact(tag),
-        ])
+        """Default allow, pinning only conditions relevant to this action."""
+        deps = frozenset(
+            Dependency.from_fact(_require_fact(world, name, subject))
+            for name, subject in Policy.required_fact_keys(
+                action, actor, target, "allow"
+            )
+        )
         return PolicyResult("ALLOW", deps, 0, "allow")
 
     return [
@@ -288,6 +283,57 @@ class Policy:
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True).encode()
         ).hexdigest()
+
+    @staticmethod
+    def required_fact_keys(
+        action: str, actor: str, target: str, rule_name: str
+    ) -> FrozenSet[Tuple[str, str]]:
+        """Return facts that must be pinned for the fired policy branch.
+
+        The branch dependencies include the conditions that produced a
+        denial/escalation. An allow pins every condition that could change
+        that action's verdict, but excludes facts irrelevant to that action.
+        """
+        branches = {
+            "authorization": {("authorized", actor), ("parent_scope_ok", actor)},
+            "protected_resource": {("protected", target), ("retention_hold", target)},
+            "export_after_sensitive_read": {("prior_sensitive_read", actor)},
+            "retry_idempotency": {("prior_effect_succeeded", target)},
+            "untrusted_delegation": {("path_tag", actor)},
+            "write_escalation": {("approval", actor), ("evidence_fresh", target)},
+        }
+        if rule_name != "allow":
+            return frozenset(branches.get(rule_name, {
+                ("authorized", actor), ("parent_scope_ok", actor)
+            }))
+
+        keys = {("authorized", actor), ("parent_scope_ok", actor)}
+        if action in {"delete", "export"}:
+            keys.update({("protected", target), ("retention_hold", target)})
+        if action == "export":
+            keys.add(("prior_sensitive_read", actor))
+        if action == "retry":
+            keys.add(("prior_effect_succeeded", target))
+        if action == "delegate":
+            keys.add(("path_tag", actor))
+        if action in {"write", "delete", "export"}:
+            keys.update({("approval", actor), ("evidence_fresh", target)})
+        return frozenset(keys)
+
+    def validate_dependencies(
+        self, result: PolicyResult, action: str, actor: str, target: str
+    ) -> None:
+        required = self.required_fact_keys(
+            action, actor, target, result.rule_name
+        )
+        declared = {(d.name, d.subject) for d in result.dependencies}
+        missing = required - declared
+        if missing:
+            details = ", ".join(f"{name}:{subject}" for name, subject in sorted(missing))
+            raise DependencyContractError(
+                f"Policy result {result.rule_name!r} omitted required dependencies: "
+                f"{details}"
+            )
 
     def evaluate(self, world: WorldState, action: str, actor: str,
                  target: str) -> PolicyResult:

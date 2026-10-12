@@ -43,12 +43,14 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 try:
-    from .policy import Dependency, Policy, PolicyResult, reference_oracle
+    from .policy import Dependency, Policy, PolicyResult
+    from .oracle import evaluate as evaluate_oracle
     from .proof import (CheckCommitGate, CoarseCache, CommitDecision,
                        ExactSnapshotStore, NoCommitGate, Proof, ProofStore)
     from .world import Fact, WorldState
 except ImportError:
-    from policy import Dependency, Policy, PolicyResult, reference_oracle
+    from policy import Dependency, Policy, PolicyResult
+    from tapr.oracle import evaluate as evaluate_oracle
     from proof import (CheckCommitGate, CoarseCache, CommitDecision,
                        ExactSnapshotStore, NoCommitGate, Proof, ProofStore)
     from world import Fact, WorldState
@@ -87,6 +89,11 @@ class DecisionRecord:
     commit_work_units:      Optional[int]   = None
     commit_expected_approved: Optional[bool] = None
     commit_correct:         Optional[bool]  = None
+    effect_occurred:        Optional[bool]  = None
+    effect_count:           Optional[int]   = None
+    invalidation_reason:    Optional[str]   = None
+    commit_world_version:   Optional[int]   = None
+    commit_latency_ns:      Optional[int]   = None
 
     @property
     def unsafe_allow(self) -> bool:
@@ -130,6 +137,12 @@ class RuntimeBase:
     def reset(self) -> None:
         """Reset per-session state (caches, proof stores)."""
 
+    def _evaluate(self, world: WorldState, action: str, actor: str,
+                  target: str) -> PolicyResult:
+        result = self.policy.evaluate(world, action, actor, target)
+        self.policy.validate_dependencies(result, action, actor, target)
+        return result
+
     @property
     def records(self) -> List[DecisionRecord]:
         return self._records
@@ -145,9 +158,9 @@ class FullRecomputeRuntime(RuntimeBase):
     def decide(self, world, action, actor, target,
                scenario_id="", step=0, family="") -> DecisionRecord:
         t0 = time.perf_counter_ns()
-        result = self.policy.evaluate(world, action, actor, target)
+        result = self._evaluate(world, action, actor, target)
         lat = time.perf_counter_ns() - t0
-        expected = reference_oracle(world, action, actor, target)
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         rec = DecisionRecord(
             scenario_id=scenario_id, step_index=step, system=self.name,
             action=action, actor=actor, target=target, family=family,
@@ -162,8 +175,9 @@ class FullRecomputeRuntime(RuntimeBase):
 
     def commit(self, record, proof, world):
         # Full recompute has no caching, so commit just re-evaluates.
-        result = self.policy.evaluate(world, record.action, record.actor,
-                                      record.target)
+        result = self._evaluate(
+            world, record.action, record.actor, record.target
+        )
         approved = result.verdict == "ALLOW"
         record.commit_approved = approved
         record.commit_reason = "recomputed"
@@ -191,10 +205,26 @@ class TAPRRuntime(RuntimeBase):
     def decide(self, world, action, actor, target,
                scenario_id="", step=0, family="") -> DecisionRecord:
         t0 = time.perf_counter_ns()
-        cached = self._store.lookup(world, action, actor, target)
+        cached = self._store.lookup(
+            world, action, actor, target, self.policy.identity
+        )
         if cached is not None:
+            self.policy.validate_dependencies(
+                PolicyResult(
+                    cached.verdict,
+                    cached.dependencies,
+                    cached.work_units,
+                    cached.rule_name,
+                    cached.policy_identity,
+                ),
+                action,
+                actor,
+                target,
+            )
             lat = time.perf_counter_ns() - t0
-            expected = reference_oracle(world, action, actor, target)
+            expected = evaluate_oracle(
+                world, action, actor, target
+            ).proposal_verdict
             rec = DecisionRecord(
                 scenario_id=scenario_id, step_index=step, system=self.name,
                 action=action, actor=actor, target=target, family=family,
@@ -210,14 +240,14 @@ class TAPRRuntime(RuntimeBase):
             return rec
 
         # Cache miss: evaluate and store.
-        result = self.policy.evaluate(world, action, actor, target)
+        result = self._evaluate(world, action, actor, target)
         lat = time.perf_counter_ns() - t0
         proof = Proof.from_result(result, str(uuid.uuid4())[:8],
                                   action, actor, target, world)
         self._store.store(proof)
         self._proof_map[f"{scenario_id}-{step}"] = proof
 
-        expected = reference_oracle(world, action, actor, target)
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         rec = DecisionRecord(
             scenario_id=scenario_id, step_index=step, system=self.name,
             action=action, actor=actor, target=target, family=family,
@@ -226,6 +256,7 @@ class TAPRRuntime(RuntimeBase):
             cache_hit=False, work_units=result.work_units, latency_ns=lat,
             rule_name=result.rule_name, dep_count=len(result.dependencies),
             world_version=world.world_version,
+            invalidation_reason=self._store.last_invalidation_reason,
         )
         self._records.append(rec)
         return rec
@@ -255,15 +286,19 @@ class ExactSnapshotRuntime(RuntimeBase):
     def __init__(self, policy: Policy):
         super().__init__(policy)
         self._store = ExactSnapshotStore()
+        self._proposal_snapshots: Dict[str, tuple[str, str]] = {}
 
     def reset(self):
         self._store = ExactSnapshotStore()
+        self._proposal_snapshots = {}
 
     def decide(self, world, action, actor, target,
                scenario_id="", step=0, family="") -> DecisionRecord:
         t0 = time.perf_counter_ns()
-        hit = self._store.lookup(world, action, actor, target)
-        expected = reference_oracle(world, action, actor, target)
+        hit = self._store.lookup(
+            world, action, actor, target, self.policy.identity
+        )
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         if hit is not None:
             verdict, work = hit
             lat = time.perf_counter_ns() - t0
@@ -277,12 +312,16 @@ class ExactSnapshotRuntime(RuntimeBase):
                 world_version=world.world_version,
             )
             self._records.append(rec)
+            self._proposal_snapshots[f"{scenario_id}-{step}"] = (
+                world.fingerprint_all(), self.policy.identity
+            )
             return rec
 
-        result = self.policy.evaluate(world, action, actor, target)
+        result = self._evaluate(world, action, actor, target)
         lat = time.perf_counter_ns() - t0
         self._store.store(world, action, actor, target,
-                          result.verdict, result.work_units)
+                          result.verdict, result.work_units,
+                          self.policy.identity)
         rec = DecisionRecord(
             scenario_id=scenario_id, step_index=step, system=self.name,
             action=action, actor=actor, target=target, family=family,
@@ -293,13 +332,27 @@ class ExactSnapshotRuntime(RuntimeBase):
             world_version=world.world_version,
         )
         self._records.append(rec)
+        self._proposal_snapshots[f"{scenario_id}-{step}"] = (
+            world.fingerprint_all(), self.policy.identity
+        )
         return rec
 
     def commit(self, record, proof, world):
-        # Exact snapshot cache is always safe at commit (full state checked on lookup).
-        record.commit_approved = record.verdict == "ALLOW"
-        record.commit_reason = "snapshot_match"
-        record.commit_work_units = 0
+        snapshot = self._proposal_snapshots.get(
+            f"{record.scenario_id}-{record.step_index}"
+        )
+        if snapshot == (world.fingerprint_all(), self.policy.identity):
+            record.commit_approved = record.verdict == "ALLOW"
+            record.commit_reason = "snapshot_match"
+            record.commit_work_units = 0
+            return record
+
+        result = self._evaluate(
+            world, record.action, record.actor, record.target
+        )
+        record.commit_approved = result.verdict == "ALLOW"
+        record.commit_reason = "recomputed"
+        record.commit_work_units = result.work_units
         return record
 
 
@@ -320,7 +373,7 @@ class CoarseCacheRuntime(RuntimeBase):
     def decide(self, world, action, actor, target,
                scenario_id="", step=0, family="") -> DecisionRecord:
         t0 = time.perf_counter_ns()
-        expected = reference_oracle(world, action, actor, target)
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         hit = self._cache.lookup(action, target)
         if hit is not None:
             lat = time.perf_counter_ns() - t0
@@ -335,7 +388,7 @@ class CoarseCacheRuntime(RuntimeBase):
             self._records.append(rec)
             return rec
 
-        result = self.policy.evaluate(world, action, actor, target)
+        result = self._evaluate(world, action, actor, target)
         lat = time.perf_counter_ns() - t0
         self._cache.store(action, target, result.verdict)
         rec = DecisionRecord(
@@ -382,7 +435,7 @@ class StaleProofAcceptRuntime(RuntimeBase):
     def decide(self, world, action, actor, target,
                scenario_id="", step=0, family="") -> DecisionRecord:
         t0 = time.perf_counter_ns()
-        expected = reference_oracle(world, action, actor, target)
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         k = self._key(action, actor, target)
         if k in self._naive:
             verdict = self._naive[k]
@@ -398,7 +451,7 @@ class StaleProofAcceptRuntime(RuntimeBase):
             self._records.append(rec)
             return rec
 
-        result = self.policy.evaluate(world, action, actor, target)
+        result = self._evaluate(world, action, actor, target)
         lat = time.perf_counter_ns() - t0
         self._naive[k] = result.verdict
         rec = DecisionRecord(
@@ -485,9 +538,9 @@ class PathlessPolicyRuntime(RuntimeBase):
                scenario_id="", step=0, family="") -> DecisionRecord:
         blind_world = self._blank_path(world)
         t0 = time.perf_counter_ns()
-        result = self.policy.evaluate(blind_world, action, actor, target)
+        result = self._evaluate(blind_world, action, actor, target)
         lat = time.perf_counter_ns() - t0
-        expected = reference_oracle(world, action, actor, target)
+        expected = evaluate_oracle(world, action, actor, target).proposal_verdict
         rec = DecisionRecord(
             scenario_id=scenario_id, step_index=step, system=self.name,
             action=action, actor=actor, target=target, family=family,

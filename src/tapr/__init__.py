@@ -7,6 +7,7 @@ probabilistic actions into verifiable, auditable, and dependency-sound state eff
 
 from .world import Fact, EffectRecord, WorldState, WorldBuilder
 from .policy import Dependency, PolicyResult, Policy, reference_oracle
+from .oracle import OracleResult, evaluate as evaluate_oracle
 from .proof import Proof, ProofStore, CheckCommitGate, NoCommitGate
 from .runtime import (
     RuntimeBase,
@@ -23,7 +24,12 @@ from .runtime import (
     UNSAFE_SYSTEMS,
 )
 from .audit import AuditEntry, AuditExplanation, audit_decision
-from .concurrent_gate import AtomicWorldStore, RaceResult, run_concurrency_race
+from .concurrent_gate import (
+    AtomicWorldStore,
+    CommitTrace,
+    RaceResult,
+    run_concurrency_race,
+)
 from .intent import IntentCase, ExtractionResult, DeterministicIntentExtractor, evaluate_intent_layer
 
 __version__ = "2.1.0"
@@ -36,6 +42,8 @@ __all__ = [
     "PolicyResult",
     "Policy",
     "reference_oracle",
+    "OracleResult",
+    "evaluate_oracle",
     "Proof",
     "ProofStore",
     "CheckCommitGate",
@@ -56,6 +64,7 @@ __all__ = [
     "AuditExplanation",
     "audit_decision",
     "AtomicWorldStore",
+    "CommitTrace",
     "RaceResult",
     "run_concurrency_race",
     "IntentCase",

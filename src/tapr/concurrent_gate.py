@@ -19,12 +19,14 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from .policy import Policy, reference_oracle
+    from .policy import Policy
+    from .oracle import evaluate as evaluate_oracle
     from .proof import CheckCommitGate, CommitDecision, NoCommitGate, Proof
     from .runtime import TAPRRuntime
     from .world import EffectRecord, Fact, WorldBuilder, WorldState
 except ImportError:
-    from policy import Policy, reference_oracle
+    from policy import Policy
+    from tapr.oracle import evaluate as evaluate_oracle
     from proof import CheckCommitGate, CommitDecision, NoCommitGate, Proof
     from runtime import TAPRRuntime
     from world import EffectRecord, Fact, WorldBuilder, WorldState
@@ -38,6 +40,27 @@ class RaceResult:
     unsafe_commits: int          # TOCTOU: committed despite world making action invalid
     contention_retries: int
     mean_commit_latency_us: float
+    p50_commit_latency_us: float = 0.0
+    p95_commit_latency_us: float = 0.0
+    p99_commit_latency_us: float = 0.0
+
+
+@dataclass(frozen=True)
+class CommitTrace:
+    attempt: int
+    proof_id: str
+    proof_state_version: int
+    proof_policy_version: int
+    state_version_before: int
+    state_version_after: int
+    interleaving: Tuple[str, ...]
+    decision: bool
+    reason: str
+    effect_outcome: str
+    effect_occurred: bool
+    effect_count: int
+    expected_authorized: bool
+    oracle_disagreement: bool
 
 
 class AtomicWorldStore:
@@ -46,6 +69,8 @@ class AtomicWorldStore:
     def __init__(self, initial_world: WorldState):
         self._lock = threading.Lock()
         self._world = initial_world
+        self._interleaving: List[str] = []
+        self.traces: List[CommitTrace] = []
 
     def get_snapshot(self) -> WorldState:
         with self._lock:
@@ -56,7 +81,13 @@ class AtomicWorldStore:
         with self._lock:
             if self._world.world_version == expected_version:
                 self._world = new_world
+                self._interleaving.append(
+                    f"cas:{expected_version}->{new_world.world_version}:success"
+                )
                 return True
+            self._interleaving.append(
+                f"cas:{expected_version}:failed_at:{self._world.world_version}"
+            )
             return False
 
     def mutate_fact(self, name: str, subject: str, new_value: Any, provenance: str = "race_mutation") -> int:
@@ -66,6 +97,9 @@ class AtomicWorldStore:
             ver = (existing.version + 1) if existing else 1
             new_fact = Fact(name, subject, new_value, ver, provenance)
             self._world = self._world.with_fact(new_fact)
+            self._interleaving.append(
+                f"mutation:{name}:{subject}:v{ver}:world{self._world.world_version}"
+            )
             return self._world.world_version
 
     def commit_effect(
@@ -74,6 +108,7 @@ class AtomicWorldStore:
         policy: Policy,
         gate: CheckCommitGate,
         timestamp: int = 0,
+        effect_outcome: str = "success",
     ) -> Tuple[CommitDecision, bool, int, str]:
         """Return (decision, committed, resulting_version, oracle_verdict).
 
@@ -87,31 +122,91 @@ class AtomicWorldStore:
         Returns (decision, effect_committed, resulting_world_version).
         This guarantees atomicity only for this in-memory simulation.
         """
+        if effect_outcome not in {"success", "partial", "failed"}:
+            raise ValueError(
+                "effect_outcome must be 'success', 'partial', or 'failed'"
+            )
+
         with self._lock:
             current = self._world
-            # The oracle is evaluated against the exact pre-effect state.
-            # It is a benchmark reference, not the enforcement mechanism.
-            oracle_verdict = reference_oracle(
+            expected = evaluate_oracle(
                 current, proof.action, proof.actor, proof.target
             )
             decision = gate.check_and_commit(proof, current, policy)
 
             if not decision.approved:
-                return decision, False, current.world_version, oracle_verdict
+                self.traces.append(CommitTrace(
+                    attempt=len(self.traces) + 1,
+                    proof_id=proof.proof_id,
+                    proof_state_version=proof.established_at,
+                    proof_policy_version=proof.policy_version,
+                    state_version_before=current.world_version,
+                    state_version_after=current.world_version,
+                    interleaving=tuple(self._interleaving),
+                    decision=False,
+                    reason=decision.reason,
+                    effect_outcome="not_attempted",
+                    effect_occurred=False,
+                    effect_count=sum(
+                        effect.action == proof.action
+                        and effect.target == proof.target
+                        and effect.outcome in {"success", "partial"}
+                        for effect in current.path
+                    ),
+                    expected_authorized=expected.commit_authorized,
+                    oracle_disagreement=(
+                        decision.approved != expected.commit_authorized
+                    ),
+                ))
+                return (
+                    decision, False, current.world_version,
+                    expected.proposal_verdict,
+                )
 
             effect = EffectRecord(
                 action=proof.action,
                 actor=proof.actor,
                 target=proof.target,
-                outcome="success",
+                outcome=effect_outcome,
                 timestamp=timestamp or current.world_version + 1,
             )
             self._world = current.with_effect(effect)
+            self._interleaving.append(
+                f"effect_attempt:{proof.action}:{proof.target}:"
+                f"{effect_outcome}:world{self._world.world_version}"
+            )
+            effect_occurred = effect_outcome in {"success", "partial"}
+            self.traces.append(CommitTrace(
+                attempt=len(self.traces) + 1,
+                proof_id=proof.proof_id,
+                proof_state_version=proof.established_at,
+                proof_policy_version=proof.policy_version,
+                state_version_before=current.world_version,
+                state_version_after=self._world.world_version,
+                interleaving=tuple(self._interleaving),
+                decision=True,
+                reason=(
+                    "effect_failed"
+                    if effect_outcome == "failed" else decision.reason
+                ),
+                effect_outcome=effect_outcome,
+                effect_occurred=effect_occurred,
+                effect_count=sum(
+                    item.action == proof.action
+                    and item.target == proof.target
+                    and item.outcome in {"success", "partial"}
+                    for item in self._world.path
+                ),
+                expected_authorized=expected.commit_authorized,
+                oracle_disagreement=(
+                    decision.approved != expected.commit_authorized
+                ),
+            ))
             return (
                 decision,
-                True,
+                    effect_occurred,
                 self._world.world_version,
-                oracle_verdict,
+                expected.proposal_verdict,
             )
 
 
@@ -194,9 +289,22 @@ def run_concurrency_race(
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [executor.submit(worker_loop, tid) for tid in range(num_threads)]
-        concurrent.futures.wait(futures)
+        for future in futures:
+            future.result()
 
     mean_lat = (sum(latencies) / len(latencies)) if latencies else 0.0
+    ordered_latencies = sorted(latencies)
+
+    def percentile(q: float) -> float:
+        if not ordered_latencies:
+            return 0.0
+        position = (len(ordered_latencies) - 1) * q
+        lower = int(position)
+        upper = min(lower + 1, len(ordered_latencies) - 1)
+        return (ordered_latencies[lower]
+                + (ordered_latencies[upper] - ordered_latencies[lower])
+                * (position - lower))
+
     return RaceResult(
         total_attempts=total_attempts,
         successful_commits=successful_commits,
@@ -204,6 +312,9 @@ def run_concurrency_race(
         unsafe_commits=unsafe_commits,
         contention_retries=retries,
         mean_commit_latency_us=mean_lat,
+        p50_commit_latency_us=percentile(0.50),
+        p95_commit_latency_us=percentile(0.95),
+        p99_commit_latency_us=percentile(0.99),
     )
 
 

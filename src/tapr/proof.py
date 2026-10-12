@@ -21,6 +21,8 @@ StaleProofAcceptor  Unsafe negative control: never re-validates.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Dict, FrozenSet, List, Optional, Tuple
@@ -80,12 +82,23 @@ class Proof:
 
     def is_valid_in(self, world: WorldState) -> bool:
         """True iff all dependencies still match and the world version is in range."""
+        return self.invalidation_reason(world) is None
+
+    def invalidation_reason(
+        self, world: WorldState, policy_identity: Optional[str] = None
+    ) -> Optional[str]:
+        """Explain why this proof cannot be reused in the supplied context."""
         if (self.valid_through is not None
                 and world.world_version > self.valid_through):
-            return False
+            return "validity_bound_exceeded"
         if self.policy_version != world.policy_version:
-            return False
-        return all(d.still_valid(world) for d in self.dependencies)
+            return "policy_version_mismatch"
+        if (policy_identity is not None
+                and self.policy_identity != policy_identity):
+            return "policy_identity_mismatch"
+        if not all(d.still_valid(world) for d in self.dependencies):
+            return "dependency_changed"
+        return None
 
     @classmethod
     def from_result(cls, result: PolicyResult, proof_id: str,
@@ -117,6 +130,7 @@ class ProofStoreStats:
     hits: int = 0
     misses: int = 0
     invalidations: int = 0
+    invalidation_reasons: Dict[str, int] = field(default_factory=dict)
 
     @property
     def total(self) -> int:
@@ -142,9 +156,10 @@ class ProofStore:
     def __init__(self):
         self._store: Dict[str, Proof] = {}
         self.stats = ProofStoreStats()
+        self.last_invalidation_reason: Optional[str] = None
 
     def lookup(self, world: WorldState, action: str, actor: str,
-               target: str) -> Optional[Proof]:
+               target: str, policy_identity: Optional[str] = None) -> Optional[Proof]:
         """Return a valid cached proof, or None (cache miss).
 
         A cached proof is only returned if:
@@ -164,16 +179,24 @@ class ProofStore:
         # fingerprint *before* evaluation using a static dependency declaration.
         # Here we iterate valid entries (bounded by number of distinct actions).
         # The O(n) scan is acceptable for the benchmark's entry counts.
+        self.last_invalidation_reason = None
         for key, proof in list(self._store.items()):
             if (proof.action == action and proof.actor == actor
                     and proof.target == target):
-                if proof.is_valid_in(world):
+                invalidation_reason = proof.invalidation_reason(
+                    world, policy_identity
+                )
+                if invalidation_reason is None:
                     self.stats.hits += 1
                     return proof
                 else:
                     # Evict stale entry.
                     del self._store[key]
                     self.stats.invalidations += 1
+                    self.last_invalidation_reason = invalidation_reason
+                    self.stats.invalidation_reasons[invalidation_reason] = (
+                        self.stats.invalidation_reasons.get(invalidation_reason, 0) + 1
+                    )
         self.stats.misses += 1
         return None
 
@@ -203,8 +226,8 @@ class ExactSnapshotStore:
         self.stats = ProofStoreStats()
 
     def lookup(self, world: WorldState, action: str, actor: str,
-               target: str) -> Optional[Tuple[str, int]]:
-        key = world.fingerprint_all() + action + actor + target
+               target: str, policy_identity: str = "") -> Optional[Tuple[str, int]]:
+        key = _exact_snapshot_key(world, action, actor, target, policy_identity)
         if key in self._store:
             self.stats.hits += 1
             return self._store[key]
@@ -212,9 +235,21 @@ class ExactSnapshotStore:
         return None
 
     def store(self, world: WorldState, action: str, actor: str,
-              target: str, verdict: str, work_units: int) -> None:
-        key = world.fingerprint_all() + action + actor + target
+              target: str, verdict: str, work_units: int,
+              policy_identity: str = "") -> None:
+        key = _exact_snapshot_key(world, action, actor, target, policy_identity)
         self._store[key] = (verdict, work_units)
+
+
+def _exact_snapshot_key(world: WorldState, action: str, actor: str,
+                        target: str, policy_identity: str) -> str:
+    payload = [
+        world.fingerprint_all(), action, actor, target,
+        world.policy_version, policy_identity,
+    ]
+    return hashlib.sha256(
+        json.dumps(payload, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -290,15 +325,23 @@ class CheckCommitGate:
                 work_units=0,
             )
 
-        if proof.policy_identity != policy.identity:
-            return CommitDecision(
-                approved=False,
-                proof=proof,
-                reason="policy_identity_mismatch",
-                work_units=0,
+        if proof.policy_identity == policy.identity:
+            policy.validate_dependencies(
+                PolicyResult(
+                    proof.verdict,
+                    proof.dependencies,
+                    proof.work_units,
+                    proof.rule_name,
+                    proof.policy_identity,
+                ),
+                proof.action,
+                proof.actor,
+                proof.target,
             )
 
-        if proof.is_valid_in(current_world):
+        if proof.invalidation_reason(
+            current_world, policy.identity
+        ) is None:
             return CommitDecision(
                 approved=(proof.verdict == "ALLOW"),
                 proof=proof,
@@ -311,6 +354,9 @@ class CheckCommitGate:
             proof.action,
             proof.actor,
             proof.target,
+        )
+        policy.validate_dependencies(
+            result, proof.action, proof.actor, proof.target
         )
         new_proof = Proof.from_result(
             result,

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-import random
+import hashlib
 import statistics
 import sys
 from pathlib import Path
@@ -33,7 +33,7 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 from benchmark import run_once, summarise
-from scenarios import generate_scenarios, FAMILIES
+from scenarios import generate_scenarios
 
 
 # ---------------------------------------------------------------------------
@@ -64,6 +64,24 @@ MIXES = {
         "authorization":    2,
         "approval_escalation": 1,
     },
+    "mutation_heavy": {
+        "concurrent_mutation": 8,
+        "revocation": 4,
+        "evidence_expiry": 4,
+        "authorization": 1,
+    },
+    "fanout_heavy": {
+        "dependency_fan_out": 8,
+        "authorization": 1,
+    },
+    "policy_heavy": {
+        "policy_rollover": 8,
+        "authorization": 1,
+    },
+    "substitution_heavy": {
+        "resource_substitution": 8,
+        "authorization": 1,
+    },
 }
 
 
@@ -83,7 +101,10 @@ def main():
     sizes  = [100, 300]        if a.quick else [200, 600, 1200]
     costs  = [0, 8]            if a.quick else [0, 4, 16, 40]
     repeats = min(a.repeats, 2) if a.quick else a.repeats
-    mixes  = ["uniform", "adversarial"] if a.quick else list(MIXES)
+    mixes  = (
+        ["uniform", "adversarial", "mutation_heavy", "noise_heavy"]
+        if a.quick else list(MIXES)
+    )
 
     rows: List[Dict[str, Any]] = []
     total = len(sizes) * len(costs) * len(mixes) * repeats
@@ -94,7 +115,13 @@ def main():
             for mix_name in mixes:
                 weights = MIXES[mix_name]
                 for rep in range(repeats):
-                    seed = a.seed + n * 3 + cost * 31 + rep * 997 + hash(mix_name) % 1000
+                    mix_offset = int.from_bytes(
+                        hashlib.sha256(mix_name.encode("utf-8")).digest()[:4],
+                        "big",
+                    ) % 1000
+                    seed = (
+                        a.seed + n * 3 + cost * 31 + rep * 997 + mix_offset
+                    )
                     scenarios = generate_scenarios(seed, n, weights=weights)
                     recs = run_once(scenarios, cost, SWEEP_SYSTEMS, seed + 1)
                     for sys_name in SWEEP_SYSTEMS:
@@ -104,6 +131,7 @@ def main():
                                 "scenarios":   n,
                                 "proof_rounds": cost,
                                 "mix":         mix_name,
+                                "seed":        seed,
                                 "rep":         rep,
                                 "system":      sys_name,
                                 "accuracy":    s["accuracy"],
@@ -113,6 +141,16 @@ def main():
                                 "work_units":  s["work_units"],
                                 "mean_latency_ns": s["mean_latency_ns"],
                                 "stale_commit_accepts": s.get("stale_commit_accepts", 0),
+                                "commit_attempts": s["commit_attempts"],
+                                "commit_accuracy": s["commit_accuracy"],
+                                "effects": s["effects"],
+                                "unsafe_effects": s["unsafe_effects"],
+                                "total_work_units": s["total_work_units"],
+                                "mean_commit_latency_ns": s[
+                                    "mean_commit_latency_ns"
+                                ],
+                                "p95_latency_ns": s["p95_latency_ns"],
+                                "p99_latency_ns": s["p99_latency_ns"],
                             })
                     done += 1
                     print(f"  sweep {done}/{total}: n={n} cost={cost} "

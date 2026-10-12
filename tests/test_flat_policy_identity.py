@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from policy import Policy, PolicyResult
+from policy import Dependency, Policy, PolicyResult
 from proof import CheckCommitGate, Proof
 from world import WorldBuilder
 
@@ -29,9 +29,12 @@ def test_same_version_policy_replacement_rejects_old_allow_proof():
     def deny_replacement(w, action, actor, target):
         return PolicyResult(
             verdict="DENY",
-            dependencies=frozenset(),
+            dependencies=frozenset({
+                Dependency.from_fact(w.facts[("authorized", actor)]),
+                Dependency.from_fact(w.facts[("parent_scope_ok", actor)]),
+            }),
             work_units=0,
-            rule_name="replacement_deny",
+            rule_name="authorization",
         )
 
     policy_b._rules = [deny_replacement]
