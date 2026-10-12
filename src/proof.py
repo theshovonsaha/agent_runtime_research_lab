@@ -67,9 +67,12 @@ class Proof:
     work_units: int
     rule_name: str
     established_ns: int = field(default_factory=time.perf_counter_ns)
+    policy_identity: str = ""
 
     def cache_key(self) -> str:
-        return deps_cache_key(self.dependencies, self.policy_version)
+        return deps_cache_key(
+            self.dependencies, self.policy_version, self.policy_identity
+        )
 
     def is_valid_in(self, world: WorldState) -> bool:
         """True iff all dependencies still match and the world version is in range."""
@@ -97,6 +100,7 @@ class Proof:
             valid_through=valid_through,
             work_units=result.work_units,
             rule_name=result.rule_name,
+            policy_identity=result.policy_identity,
         )
 
 
@@ -272,7 +276,8 @@ class CheckCommitGate:
         If the proof is still valid, return approved=True.
         If any dependency has changed, recompute and return the fresh verdict.
         """
-        if proof.is_valid_in(current_world):
+        if (proof.policy_identity == policy.identity
+                and proof.is_valid_in(current_world)):
             return CommitDecision(
                 approved=(proof.verdict == "ALLOW"),
                 proof=proof,

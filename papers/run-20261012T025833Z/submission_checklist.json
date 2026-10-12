@@ -1,0 +1,21 @@
+{
+  "status": "NOT_CERTIFIED_FOR_SUBMISSION",
+  "checks": [
+    {
+      "item": "venue template applied",
+      "status": "required_manual"
+    },
+    {
+      "item": "all claims checked against raw outputs",
+      "status": "verified_local"
+    },
+    {
+      "item": "prior-art review complete",
+      "status": "in_progress"
+    },
+    {
+      "item": "independent replication completed",
+      "status": "not_done"
+    }
+  ]
+}

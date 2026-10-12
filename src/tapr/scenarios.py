@@ -1,0 +1,572 @@
+"""
+scenarios.py – Adversarial stateful scenario generator.
+
+A scenario is a *sequence* of world-state events: mutations, proposed
+actions, and commit attempts.  This is fundamentally different from isolated
+test cases.  The runtime must track what it has proven, which facts those
+proofs depended on, and whether those proofs are still sound as the world
+evolves.
+
+Scenario families
+-----------------
+authorization           Baseline: straightforward allow/deny by authorization.
+path_dependent          Legality of an action depends on what happened earlier
+                        in the session (execution path).
+revocation              Authorization revoked *after* a proof was established.
+evidence_expiry         Evidence goes stale between proof establishment and commit.
+retry_safety            Retry after partial effect: safe only if idempotent.
+delegation_chain        Multi-hop delegation with scope constraints.
+policy_rollover         Policy version increments mid-session.
+irrelevant_noise        Metadata changes that should NOT invalidate proofs.
+concurrent_mutation     State changes while an evaluation is in-flight (simulated
+                        as two simultaneous decision requests on evolving state).
+dependency_fan_out      Decision depends on many evidence facts simultaneously.
+approval_escalation     Missing approval triggers ESCALATE, not DENY.
+protected_resource      Destructive actions on guarded resources must be denied.
+
+Event types (within a scenario)
+--------------------------------
+WorldMutationEvent      Changes one or more facts in the world state.
+ProposalEvent           Agent proposes an action; the runtime must decide.
+CommitAttemptEvent      Effect boundary: gate re-validates the proof.
+PolicyRolloverEvent     Increments the active policy version.
+"""
+from __future__ import annotations
+
+import random
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Any, List, Optional, Sequence, Tuple
+
+try:
+    from .world import Fact, WorldBuilder, WorldState
+except ImportError:
+    from world import Fact, WorldBuilder, WorldState
+
+
+# ---------------------------------------------------------------------------
+# Event types
+# ---------------------------------------------------------------------------
+
+class EventKind(Enum):
+    WORLD_MUTATION = auto()
+    PROPOSAL = auto()
+    COMMIT_ATTEMPT = auto()
+    POLICY_ROLLOVER = auto()
+
+
+@dataclass
+class WorldMutationEvent:
+    kind: EventKind = field(default=EventKind.WORLD_MUTATION, init=False)
+    mutations: List[Tuple[str, str, Any, str]]  # (name, subject, value, provenance)
+    reason: str = ""
+
+
+@dataclass
+class ProposalEvent:
+    kind: EventKind = field(default=EventKind.PROPOSAL, init=False)
+    action: str
+    actor: str
+    target: str
+    # Expected verdict from the reference oracle *at this point in time*.
+    # Set by the generator after constructing the full scenario.
+    expected_verdict: str = ""
+
+
+@dataclass
+class CommitAttemptEvent:
+    kind: EventKind = field(default=EventKind.COMMIT_ATTEMPT, init=False)
+    proposal_index: int   # index of the corresponding ProposalEvent
+    # Expected: should the commit gate approve given the world at commit time?
+    expected_approved: bool = True
+
+
+@dataclass
+class PolicyRolloverEvent:
+    kind: EventKind = field(default=EventKind.POLICY_ROLLOVER, init=False)
+    new_version: int
+    reason: str = ""
+
+
+Event = WorldMutationEvent | ProposalEvent | CommitAttemptEvent | PolicyRolloverEvent
+
+
+@dataclass
+class Scenario:
+    """A stateful event sequence representing one test case for the runtime.
+
+    Attributes
+    ----------
+    scenario_id     Unique identifier.
+    family          Which scenario family generated this.
+    events          Ordered list of events to replay.
+    initial_world   The world state before any events are applied.
+    notes           Human-readable description for debugging.
+    """
+    scenario_id: str
+    family: str
+    events: List[Event]
+    initial_world: WorldState
+    notes: str = ""
+
+
+# ---------------------------------------------------------------------------
+# Scenario families
+# ---------------------------------------------------------------------------
+
+ACTIONS = ("read", "write", "delete", "export", "delegate", "retry", "approve")
+TARGETS = [f"resource-{i}" for i in range(12)]
+ACTORS  = [f"agent-{i}"    for i in range(6)]
+
+
+def _base_world(rng: random.Random, actor: str, target: str,
+                policy_version: int = 1) -> WorldState:
+    """Generate a reasonable default world state for an actor/target pair."""
+    b = WorldBuilder(policy_version=policy_version)
+    b.set("authorized",          actor,  rng.random() > 0.08)
+    b.set("parent_scope_ok",     actor,  rng.random() > 0.06)
+    b.set("approval",            actor,  rng.random() > 0.22)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, rng.random() < 0.10)
+    b.set("retention_hold",      target, rng.random() < 0.07)
+    b.set("evidence_fresh",      target, rng.random() > 0.15)
+    b.set("metadata_version",    target, rng.randint(1, 10000))   # irrelevant noise
+    b.set("request_id",          actor,  rng.randint(1, 999999))  # irrelevant noise
+    return b.build()
+
+
+def _simple_authorization(rng: random.Random, sid: str) -> Scenario:
+    from .policy import reference_oracle
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    action = rng.choice(("read", "write", "delete", "export"))
+    world  = _base_world(rng, actor, target)
+    events: List[Event] = [
+        ProposalEvent(action=action, actor=actor, target=target),
+        CommitAttemptEvent(
+            proposal_index=0,
+            expected_approved=(
+                reference_oracle(world, action, actor, target) == "ALLOW"
+            ),
+        ),
+    ]
+    return Scenario(sid, "authorization", events, world,
+                    notes=f"{actor} {action} {target}")
+
+
+def _path_dependent(rng: random.Random, sid: str) -> Scenario:
+    """Export is denied if actor previously read a sensitive resource."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        # Step 1: read succeeds, path now shows sensitive read
+        ProposalEvent(action="read", actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        # Mutation: path now reflects the sensitive read
+        WorldMutationEvent(
+            mutations=[("prior_sensitive_read", actor, True, "path_effect")],
+            reason="session recorded sensitive read"),
+        # Step 2: export is now denied because of path dependency
+        ProposalEvent(action="export", actor=actor, target=target,
+                      expected_verdict="DENY"),
+        CommitAttemptEvent(proposal_index=2, expected_approved=False),
+    ]
+    return Scenario(sid, "path_dependent", events, b.build(),
+                    notes="export denied after sensitive read in path")
+
+
+def _revocation(rng: random.Random, sid: str) -> Scenario:
+    """ALLOW proof is established, then authorization is revoked before commit."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    action = rng.choice(("read", "write"))
+    events: List[Event] = [
+        # Proof established while authorized=True → ALLOW
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        # Authorization revoked between proof and commit
+        WorldMutationEvent(
+            mutations=[("authorized", actor, False, "revocation")],
+            reason="authorization revoked mid-flight"),
+        # Commit gate must re-validate and DENY
+        CommitAttemptEvent(proposal_index=0, expected_approved=False),
+    ]
+    return Scenario(sid, "revocation", events, b.build(),
+                    notes="commit gate must catch post-proof revocation")
+
+
+def _evidence_expiry(rng: random.Random, sid: str) -> Scenario:
+    """Evidence is fresh when proof is established, expires before commit."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    action = rng.choice(("write", "delete", "export"))
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)   # fresh initially
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        # Evidence expires between decision and commit
+        WorldMutationEvent(
+            mutations=[("evidence_fresh", target, False, "expiry")],
+            reason="evidence expired"),
+        CommitAttemptEvent(proposal_index=0, expected_approved=False),
+    ]
+    return Scenario(sid, "evidence_expiry", events, b.build(),
+                    notes="commit gate must catch post-proof evidence expiry")
+
+
+def _retry_safety(rng: random.Random, sid: str) -> Scenario:
+    """Retry is denied if prior attempt already succeeded."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)  # first attempt hasn't succeeded yet
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        # First retry attempt: allowed (prior_effect_succeeded=False)
+        ProposalEvent(action="retry", actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        CommitAttemptEvent(proposal_index=0, expected_approved=True),
+        # Effect succeeds; path records success
+        WorldMutationEvent(
+            mutations=[("prior_effect_succeeded", target, True, "effect")],
+            reason="first retry succeeded"),
+        # Second retry attempt: denied (prior_effect_succeeded=True)
+        ProposalEvent(action="retry", actor=actor, target=target,
+                      expected_verdict="DENY"),
+        CommitAttemptEvent(proposal_index=3, expected_approved=False),
+    ]
+    return Scenario(sid, "retry_safety", events, b.build(),
+                    notes="second retry denied after first succeeded")
+
+
+def _irrelevant_noise(rng: random.Random, sid: str) -> Scenario:
+    """Many metadata mutations that should NOT invalidate cached proofs."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    action = rng.choice(("read", "write"))
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, 1)
+    b.set("request_id",          actor,  1)
+
+    # Build events: proposal, then many irrelevant metadata bumps, then more proposals
+    events: List[Event] = [
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW" if action == "read" else "ALLOW"),
+    ]
+    for i in range(rng.randint(3, 8)):
+        events.append(WorldMutationEvent(
+            mutations=[
+                ("metadata_version", target, i + 2, "irrelevant"),
+                ("request_id",       actor,  i + 2, "irrelevant"),
+            ],
+            reason=f"metadata bump {i+1}"))
+        events.append(ProposalEvent(action=action, actor=actor, target=target,
+                                    expected_verdict="ALLOW"))
+
+    return Scenario(sid, "irrelevant_noise", events, b.build(),
+                    notes="metadata changes must not invalidate TAPR proofs")
+
+
+def _approval_escalation(rng: random.Random, sid: str) -> Scenario:
+    """Missing approval triggers ESCALATE; obtaining approval switches to ALLOW."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    action = rng.choice(("write", "delete"))
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  False)  # approval missing
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ESCALATE"),
+        # Approval granted
+        WorldMutationEvent(
+            mutations=[("approval", actor, True, "granted")],
+            reason="approval granted"),
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        CommitAttemptEvent(proposal_index=2, expected_approved=True),
+    ]
+    return Scenario(sid, "approval_escalation", events, b.build(),
+                    notes="ESCALATE transitions to ALLOW after approval")
+
+
+def _delegation_chain(rng: random.Random, sid: str) -> Scenario:
+    """Delegation is denied when path_tag indicates untrusted source."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(ACTORS)
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        ProposalEvent(action="delegate", actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        # Path tag flipped to untrusted
+        WorldMutationEvent(
+            mutations=[("path_tag", actor, "untrusted_delegation", "taint")],
+            reason="path tainted by untrusted source"),
+        ProposalEvent(action="delegate", actor=actor, target=target,
+                      expected_verdict="DENY"),
+        CommitAttemptEvent(proposal_index=2, expected_approved=False),
+    ]
+    return Scenario(sid, "delegation_chain", events, b.build(),
+                    notes="delegation denied after path tainting")
+
+
+def _policy_rollover(rng: random.Random, sid: str) -> Scenario:
+    """Policy version increment must invalidate all cached proofs."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    action = rng.choice(("read", "write"))
+    b = WorldBuilder(policy_version=1)
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    events: List[Event] = [
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        PolicyRolloverEvent(new_version=2, reason="policy update"),
+        # After rollover, cached proof is invalid (policy version changed)
+        ProposalEvent(action=action, actor=actor, target=target,
+                      expected_verdict="ALLOW"),  # verdict unchanged but must recompute
+    ]
+    return Scenario(sid, "policy_rollover", events, b.build(),
+                    notes="policy version change forces cache invalidation")
+
+
+def _dependency_fan_out(rng: random.Random, sid: str) -> Scenario:
+    """Decision depends on many evidence facts; test that ALL are tracked."""
+    actor  = rng.choice(ACTORS)
+    target = rng.choice(TARGETS)
+    b = WorldBuilder()
+    b.set("authorized",          actor,  True)
+    b.set("parent_scope_ok",     actor,  True)
+    b.set("approval",            actor,  True)
+    b.set("path_tag",            actor,  "ordinary")
+    b.set("prior_sensitive_read",actor,  False)
+    b.set("prior_effect_succeeded", target, False)
+    b.set("protected",           target, False)
+    b.set("retention_hold",      target, False)
+    b.set("evidence_fresh",      target, True)
+    b.set("metadata_version",    target, rng.randint(1, 10000))
+
+    # Multiple mutations one after another — each should invalidate the proof
+    changed_fact = rng.choice([
+        ("authorized", actor, False),
+        ("evidence_fresh", target, False),
+        ("approval", actor, False),
+        ("protected", target, True),
+    ])
+    events: List[Event] = [
+        ProposalEvent(action="write", actor=actor, target=target,
+                      expected_verdict="ALLOW"),
+        WorldMutationEvent(
+            mutations=[(changed_fact[0], changed_fact[1], changed_fact[2], "test")],
+            reason=f"relevant mutation: {changed_fact[0]}"),
+        ProposalEvent(action="write", actor=actor, target=target,
+                      expected_verdict="DENY" if changed_fact[0] in (
+                          "authorized", "protected") else "ESCALATE"),
+    ]
+    return Scenario(sid, "dependency_fan_out", events, b.build(),
+                    notes=f"mutation of {changed_fact[0]} must invalidate proof")
+
+
+# ---------------------------------------------------------------------------
+# Scenario generator
+# ---------------------------------------------------------------------------
+
+_FAMILY_BUILDERS = {
+    "authorization":       _simple_authorization,
+    "path_dependent":      _path_dependent,
+    "revocation":          _revocation,
+    "evidence_expiry":     _evidence_expiry,
+    "retry_safety":        _retry_safety,
+    "irrelevant_noise":    _irrelevant_noise,
+    "approval_escalation": _approval_escalation,
+    "delegation_chain":    _delegation_chain,
+    "policy_rollover":     _policy_rollover,
+    "dependency_fan_out":  _dependency_fan_out,
+}
+
+FAMILIES = list(_FAMILY_BUILDERS.keys())
+
+
+def generate_scenarios(seed: int, n: int,
+                       weights: Optional[dict] = None) -> List[Scenario]:
+    """Generate *n* scenarios with a reproducible random seed.
+
+    Parameters
+    ----------
+    seed    Random seed for reproducibility.
+    n       Number of scenarios to generate.
+    weights Optional dict mapping family name to relative weight.
+            Defaults to uniform.
+    """
+    rng = random.Random(seed)
+    families = list(_FAMILY_BUILDERS.keys())
+    if weights:
+        population = [f for f in families for _ in range(weights.get(f, 1))]
+    else:
+        population = families
+
+    scenarios: List[Scenario] = []
+    for i in range(n):
+        family = rng.choice(population)
+        builder = _FAMILY_BUILDERS[family]
+        sid = f"s-{i:06d}-{family[:6]}"
+        try:
+            sc = builder(rng, sid)
+            scenarios.append(sc)
+        except Exception as exc:  # noqa: BLE001
+            # Never crash the generator; record a minimal placeholder.
+            w = WorldBuilder().set("authorized", "agent-0", True).build()
+            scenarios.append(Scenario(sid, "error", [], w, notes=str(exc)))
+
+    return scenarios
+
+
+def replay_scenario(scenario, runtime, policy, rep=0):
+    """Replay a scenario using the tapr package implementation.
+
+    Returns one DecisionRecord per ProposalEvent.
+    Policy rollover updates both the local policy and runtime policy.
+    """
+    from .policy import Policy, reference_oracle
+
+    runtime.reset()
+    world = scenario.initial_world
+    records = []
+    pending_commits = {}
+
+    step = 0
+
+    for event_idx, event in enumerate(scenario.events):
+        if isinstance(event, WorldMutationEvent):
+            for name, subject, value, provenance in event.mutations:
+                existing = world.facts.get((name, subject))
+                version = existing.version + 1 if existing else 1
+                fact = Fact(name, subject, value, version, provenance)
+                world = world.with_fact(fact)
+
+        elif isinstance(event, PolicyRolloverEvent):
+            world = world.with_policy_version(event.new_version)
+            policy = Policy(
+                version=event.new_version,
+                proof_rounds=policy.proof_rounds,
+            )
+            runtime.policy = policy
+
+        elif isinstance(event, ProposalEvent):
+            record = runtime.decide(
+                world,
+                event.action,
+                event.actor,
+                event.target,
+                scenario_id=scenario.scenario_id,
+                step=step,
+                family=scenario.family,
+            )
+
+            record.expected = reference_oracle(
+                world, event.action, event.actor, event.target
+            )
+            record.correct = record.verdict == record.expected
+
+            records.append(record)
+            pending_commits[event_idx] = (record, world, step)
+            step += 1
+
+        elif isinstance(event, CommitAttemptEvent):
+            commit_info = pending_commits.get(event.proposal_index)
+            if commit_info is None:
+                continue
+
+            record, world_at_proposal, proposal_step = commit_info
+            runtime.commit(record, None, world)
+
+            record.commit_expected_approved = event.expected_approved
+            record.commit_correct = (
+                record.commit_approved == event.expected_approved
+            )
+
+    return records

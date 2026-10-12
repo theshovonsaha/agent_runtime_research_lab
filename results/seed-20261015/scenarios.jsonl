@@ -1,0 +1,400 @@
+{"scenario_id": "s-000000-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000001-author", "family": "authorization", "notes": "agent-0 write resource-9", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000002-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000003-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000004-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000005-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000006-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000007-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000008-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000009-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000010-author", "family": "authorization", "notes": "agent-3 write resource-8", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000011-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000012-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000013-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000014-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000015-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000016-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000017-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000018-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000019-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000020-author", "family": "authorization", "notes": "agent-0 read resource-1", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000021-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000022-depend", "family": "dependency_fan_out", "notes": "mutation of approval must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000023-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000024-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000025-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000026-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000027-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000028-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000029-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000030-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 7, "policy_version": 1}
+{"scenario_id": "s-000031-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000032-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000033-author", "family": "authorization", "notes": "agent-2 read resource-3", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000034-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000035-author", "family": "authorization", "notes": "agent-1 export resource-8", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000036-author", "family": "authorization", "notes": "agent-0 read resource-6", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000037-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000038-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000039-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000040-depend", "family": "dependency_fan_out", "notes": "mutation of approval must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000041-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000042-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000043-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000044-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 13, "policy_version": 1}
+{"scenario_id": "s-000045-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000046-author", "family": "authorization", "notes": "agent-4 write resource-10", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000047-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000048-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000049-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000050-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000051-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000052-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000053-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000054-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000055-author", "family": "authorization", "notes": "agent-5 write resource-2", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000056-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000057-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000058-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000059-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000060-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000061-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000062-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000063-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000064-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000065-author", "family": "authorization", "notes": "agent-3 write resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000066-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000067-author", "family": "authorization", "notes": "agent-2 read resource-6", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000068-author", "family": "authorization", "notes": "agent-4 export resource-9", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000069-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000070-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000071-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 7, "policy_version": 1}
+{"scenario_id": "s-000072-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000073-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000074-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000075-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000076-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000077-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000078-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000079-author", "family": "authorization", "notes": "agent-3 delete resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000080-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000081-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000082-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000083-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000084-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000085-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000086-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000087-author", "family": "authorization", "notes": "agent-3 read resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000088-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000089-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000090-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000091-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000092-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000093-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000094-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000095-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000096-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000097-author", "family": "authorization", "notes": "agent-5 export resource-2", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000098-author", "family": "authorization", "notes": "agent-2 export resource-10", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000099-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000100-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000101-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000102-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000103-author", "family": "authorization", "notes": "agent-1 delete resource-6", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000104-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000105-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000106-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000107-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000108-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000109-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000110-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000111-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000112-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000113-depend", "family": "dependency_fan_out", "notes": "mutation of approval must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000114-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000115-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000116-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000117-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000118-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 13, "policy_version": 1}
+{"scenario_id": "s-000119-author", "family": "authorization", "notes": "agent-0 read resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000120-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000121-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 7, "policy_version": 1}
+{"scenario_id": "s-000122-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000123-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000124-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000125-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000126-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000127-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000128-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000129-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000130-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000131-depend", "family": "dependency_fan_out", "notes": "mutation of approval must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000132-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000133-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000134-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000135-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000136-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000137-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000138-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 7, "policy_version": 1}
+{"scenario_id": "s-000139-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000140-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000141-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000142-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000143-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000144-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000145-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000146-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000147-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000148-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000149-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000150-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000151-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000152-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000153-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000154-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000155-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000156-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000157-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000158-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000159-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000160-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000161-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000162-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000163-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000164-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000165-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000166-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000167-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000168-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000169-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000170-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000171-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000172-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000173-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000174-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000175-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000176-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000177-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000178-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000179-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000180-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000181-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000182-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000183-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000184-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000185-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000186-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000187-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000188-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000189-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000190-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000191-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000192-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000193-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000194-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000195-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000196-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000197-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000198-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000199-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000200-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000201-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000202-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000203-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000204-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000205-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000206-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000207-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000208-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000209-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000210-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000211-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 13, "policy_version": 1}
+{"scenario_id": "s-000212-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000213-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000214-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000215-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000216-author", "family": "authorization", "notes": "agent-2 write resource-11", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000217-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000218-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000219-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000220-author", "family": "authorization", "notes": "agent-1 delete resource-3", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000221-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000222-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000223-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000224-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000225-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000226-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000227-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000228-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000229-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000230-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000231-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000232-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000233-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000234-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000235-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000236-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 9, "policy_version": 1}
+{"scenario_id": "s-000237-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000238-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000239-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000240-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000241-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000242-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000243-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000244-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000245-author", "family": "authorization", "notes": "agent-1 write resource-7", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000246-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000247-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000248-author", "family": "authorization", "notes": "agent-0 read resource-2", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000249-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000250-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000251-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000252-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000253-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000254-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000255-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000256-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000257-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000258-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000259-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000260-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000261-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000262-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000263-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000264-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 7, "policy_version": 1}
+{"scenario_id": "s-000265-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000266-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000267-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000268-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000269-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000270-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000271-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000272-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000273-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000274-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000275-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000276-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000277-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000278-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000279-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000280-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000281-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000282-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000283-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000284-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000285-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000286-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000287-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000288-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000289-author", "family": "authorization", "notes": "agent-0 export resource-0", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000290-author", "family": "authorization", "notes": "agent-0 export resource-9", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000291-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000292-author", "family": "authorization", "notes": "agent-5 export resource-1", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000293-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000294-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000295-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000296-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000297-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000298-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000299-author", "family": "authorization", "notes": "agent-4 read resource-9", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000300-author", "family": "authorization", "notes": "agent-4 delete resource-10", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000301-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000302-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000303-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000304-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000305-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000306-author", "family": "authorization", "notes": "agent-1 export resource-11", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000307-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000308-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000309-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000310-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000311-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000312-author", "family": "authorization", "notes": "agent-4 write resource-3", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000313-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000314-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000315-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000316-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000317-author", "family": "authorization", "notes": "agent-3 read resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000318-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000319-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000320-author", "family": "authorization", "notes": "agent-1 read resource-11", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000321-author", "family": "authorization", "notes": "agent-2 export resource-10", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000322-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000323-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000324-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000325-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000326-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000327-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000328-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000329-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000330-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000331-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000332-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000333-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 9, "policy_version": 1}
+{"scenario_id": "s-000334-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000335-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000336-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 11, "policy_version": 1}
+{"scenario_id": "s-000337-depend", "family": "dependency_fan_out", "notes": "mutation of approval must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000338-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000339-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000340-author", "family": "authorization", "notes": "agent-4 read resource-1", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000341-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000342-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000343-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 15, "policy_version": 1}
+{"scenario_id": "s-000344-author", "family": "authorization", "notes": "agent-4 write resource-10", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000345-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000346-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000347-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000348-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000349-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000350-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000351-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000352-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000353-depend", "family": "dependency_fan_out", "notes": "mutation of protected must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000354-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000355-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000356-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000357-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000358-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000359-author", "family": "authorization", "notes": "agent-1 export resource-1", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000360-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000361-author", "family": "authorization", "notes": "agent-3 write resource-7", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000362-author", "family": "authorization", "notes": "agent-5 write resource-3", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000363-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000364-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000365-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000366-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000367-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000368-author", "family": "authorization", "notes": "agent-2 export resource-5", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000369-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000370-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000371-author", "family": "authorization", "notes": "agent-4 delete resource-3", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000372-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000373-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000374-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000375-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000376-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000377-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000378-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000379-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000380-author", "family": "authorization", "notes": "agent-0 read resource-4", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000381-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000382-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000383-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000384-irrele", "family": "irrelevant_noise", "notes": "metadata changes must not invalidate TAPR proofs", "event_count": 17, "policy_version": 1}
+{"scenario_id": "s-000385-approv", "family": "approval_escalation", "notes": "ESCALATE transitions to ALLOW after approval", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000386-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000387-eviden", "family": "evidence_expiry", "notes": "commit gate must catch post-proof evidence expiry", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000388-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000389-retry_", "family": "retry_safety", "notes": "second retry denied after first succeeded", "event_count": 5, "policy_version": 1}
+{"scenario_id": "s-000390-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000391-author", "family": "authorization", "notes": "agent-3 delete resource-0", "event_count": 2, "policy_version": 1}
+{"scenario_id": "s-000392-revoca", "family": "revocation", "notes": "commit gate must catch post-proof revocation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000393-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000394-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000395-depend", "family": "dependency_fan_out", "notes": "mutation of authorized must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000396-depend", "family": "dependency_fan_out", "notes": "mutation of evidence_fresh must invalidate proof", "event_count": 3, "policy_version": 1}
+{"scenario_id": "s-000397-path_d", "family": "path_dependent", "notes": "export denied after sensitive read in path", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000398-delega", "family": "delegation_chain", "notes": "delegation denied after path tainting", "event_count": 4, "policy_version": 1}
+{"scenario_id": "s-000399-policy", "family": "policy_rollover", "notes": "policy version change forces cache invalidation", "event_count": 3, "policy_version": 1}

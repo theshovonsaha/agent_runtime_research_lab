@@ -22,13 +22,13 @@ Current AI agent benchmarks almost exclusively measure *language quality* (final
 
 | System | Accuracy | Unsafe ✗ | Cache hit | Full evals | Lat μs |
 |--------|----------|----------|-----------|------------|--------|
-| Full recompute | 100.0% | 0.0 | 0.0% | 140 | 8.18 |
-| TAPR dep-cache ★ | 100.0% | 0.0 | 40.7% | 83 | 5.70 |
-| Exact snapshot | 100.0% | 0.0 | 0.0% | 140 | 16.13 |
-| Coarse cache ⚠ ⚠ | 83.6% | 19.0 | 62.1% | 53 | 3.86 |
-| Stale proof ⚠ ⚠ | 83.6% | 19.0 | 62.1% | 53 | 4.61 |
-| No commit gate ⚠ ⚠ | 100.0% | 0.0 | 40.7% | 83 | 5.58 |
-| Pathless policy ⚠ ⚠ | 90.0% | 14.0 | 0.0% | 140 | 8.61 |
+| Full recompute | 100.0% | 0.0 | 0.0% | 921 | 14.20 |
+| TAPR dep-cache ★ | 100.0% | 0.0 | 30.4% | 641 | 10.60 |
+| Exact snapshot | 100.0% | 0.0 | 0.0% | 921 | 21.02 |
+| Coarse cache ⚠ ⚠ | 84.7% | 100.0 | 52.0% | 442 | 7.77 |
+| Stale proof ⚠ ⚠ | 84.7% | 100.0 | 52.0% | 442 | 7.48 |
+| No commit gate ⚠ ⚠ | 100.0% | 0.0 | 30.4% | 641 | 10.43 |
+| Pathless policy ⚠ ⚠ | 87.4% | 116.0 | 0.0% | 921 | 14.68 |
 
 ## Figures
 

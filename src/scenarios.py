@@ -135,13 +135,19 @@ def _base_world(rng: random.Random, actor: str, target: str,
 
 
 def _simple_authorization(rng: random.Random, sid: str) -> Scenario:
+    from policy import reference_oracle
     actor  = rng.choice(ACTORS)
     target = rng.choice(TARGETS)
     action = rng.choice(("read", "write", "delete", "export"))
     world  = _base_world(rng, actor, target)
     events: List[Event] = [
         ProposalEvent(action=action, actor=actor, target=target),
-        CommitAttemptEvent(proposal_index=0, expected_approved=True),
+        CommitAttemptEvent(
+            proposal_index=0,
+            expected_approved=(
+                reference_oracle(world, action, actor, target) == "ALLOW"
+            ),
+        ),
     ]
     return Scenario(sid, "authorization", events, world,
                     notes=f"{actor} {action} {target}")

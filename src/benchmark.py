@@ -119,8 +119,15 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
             rec, world_at_proposal, proposal_step = commit_info
             # The world may have changed since the proposal.
             rec = runtime.commit(rec, None, world)
-            rec.commit_expected_approved = event.expected_approved
-            rec.commit_correct = (rec.commit_approved == event.expected_approved)
+            commit_oracle_verdict = reference_oracle(
+                world, rec.action, rec.actor, rec.target
+            )
+            rec.commit_expected_approved = (
+                commit_oracle_verdict == "ALLOW"
+            )
+            rec.commit_correct = (
+                rec.commit_approved == rec.commit_expected_approved
+            )
 
     return records
 

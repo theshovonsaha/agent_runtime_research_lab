@@ -32,15 +32,17 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--root', default='.')
     p.add_argument('--out', default='papers')
+    p.add_argument('--run-dir', default='results', help='Benchmark run directory relative to --root, or absolute path')
     a = p.parse_args()
 
     root = Path(a.root).resolve()
     outroot = root / a.out
     outroot.mkdir(parents=True, exist_ok=True)
 
-    metrics_path = root / 'results/run_metrics.csv'
-    trace_path = root / 'results/decision_traces.csv'
-    sweep_path = root / 'results/sweep.csv'
+    run_dir = (root / a.run_dir).resolve()
+    metrics_path = run_dir / 'run_metrics.csv'
+    trace_path = run_dir / 'decision_traces.csv'
+    sweep_path = run_dir / 'sweep.csv'
 
     if not metrics_path.exists():
         raise SystemExit(f"Missing {metrics_path}. Run the benchmark first.")
@@ -53,7 +55,7 @@ def main():
     out = outroot / run_id
     out.mkdir(parents=True, exist_ok=False)
 
-    manifest_path = root / 'results/manifest.json'
+    manifest_path = run_dir / 'manifest.json'
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
     manifest.update({
         'lab_version': VERSION,
@@ -61,6 +63,15 @@ def main():
         'generated_at_utc': datetime.now(timezone.utc).isoformat(),
         'python_runtime': sys.version,
         'platform': platform.platform(),
+       'benchmark_run_dir': str(run_dir),
+       'git_revision': subprocess.run(
+           ['git', 'rev-parse', 'HEAD'], cwd=root, text=True,
+           capture_output=True, check=False
+       ).stdout.strip() or None,
+       'git_worktree_dirty': bool(subprocess.run(
+           ['git', 'status', '--porcelain'], cwd=root, text=True,
+           capture_output=True, check=False
+       ).stdout.strip()),
         'input_sha256': {
             'run_metrics.csv': sha(metrics_path),
             'decision_traces.csv': sha(trace_path) if trace_path.exists() else None,
@@ -72,12 +83,12 @@ def main():
     # Copy exact inputs and generated figures for an auditable, self-contained run
     (out / 'data').mkdir()
     shutil.copy2(metrics_path, out / 'data/run_metrics.csv')
-    for q in (trace_path, sweep_path, root / 'results/scenarios.jsonl', root / 'results/family_accuracy.csv'):
+    for q in (trace_path, sweep_path, run_dir / 'scenarios.jsonl', run_dir / 'family_accuracy.csv'):
         if q.exists():
             shutil.copy2(q, out / 'data' / q.name)
 
     (out / 'figures').mkdir()
-    for q in (root / 'figures').glob('*.png'):
+    for q in (run_dir / 'figures').glob('*.png'):
         shutil.copy2(q, out / 'figures' / q.name)
 
     # Calculate average across repetitions per system
@@ -168,7 +179,7 @@ Scenarios are sequential event streams consisting of:
 
 ## 5. Artifact availability
 
-All code, seeds, decision traces, and figures are committed and reproducible via `./run_lab.sh`.
+This bundle contains copies of the selected run's available data and figures. The run manifest records input hashes and repository provenance where available. Reproduction requires the source code and dependencies; repository cleanliness and artifact availability must be checked separately.
 '''
     (out / 'paper.md').write_text(md)
 
@@ -208,7 +219,10 @@ All code, seeds, decision traces, and figures are committed and reproducible via
     # Build real research PDF with embedded figures & tables
     try:
         from pdf_report import build_research_paper_pdf
-        build_research_paper_pdf(root, out / 'paper.pdf')
+        build_research_paper_pdf(
+            root, out / 'paper.pdf', run_dir=run_dir,
+            figure_dir=out / 'figures', temp_dir=out / 'pdf_tmp'
+        )
         print(f"Generated versioned research PDF: {out / 'paper.pdf'}")
     except Exception as e:
         print(f"PDF build note: {e}")

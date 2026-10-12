@@ -74,14 +74,14 @@ class Dependency:
             sort_keys=True, separators=(",", ":"))
 
 
-def deps_cache_key(deps: FrozenSet[Dependency], policy_version: int) -> str:
+def deps_cache_key(deps: FrozenSet[Dependency], policy_version: int, policy_identity: str = "") -> str:
     """Stable cache key derived from a dependency set + policy version.
 
     This is the TAPR cache key: identical dependency sets with the same
     policy version produce the same key, regardless of irrelevant metadata.
     """
     parts = sorted(d.cache_key_contribution() for d in deps)
-    blob = json.dumps({"policy_version": policy_version, "deps": parts},
+    blob = json.dumps({"policy_version": policy_version, "policy_identity": policy_identity, "deps": parts},
                       sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode()).hexdigest()[:20]
 
@@ -106,13 +106,17 @@ class PolicyResult:
     dependencies: FrozenSet[Dependency]
     work_units: int
     rule_name: str
-
+    policy_identity: str = ""
     def is_valid_in(self, world: WorldState) -> bool:
         """Return True iff all dependencies are still satisfied."""
         return all(d.still_valid(world) for d in self.dependencies)
 
     def cache_key(self, policy_version: int) -> str:
-        return deps_cache_key(self.dependencies, policy_version)
+        return deps_cache_key(
+            self.dependencies,
+            policy_version,
+            self.policy_identity,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +262,18 @@ class Policy:
         self.proof_rounds = proof_rounds
         self._rules = _policy_rules()
 
+    @property
+    def identity(self) -> str:
+        """Process-local identity for this policy instance and rule set."""
+        payload = {
+            "version": self.version,
+            "rules_list_id": id(self._rules),
+            "rule_ids": [id(rule) for rule in self._rules],
+        }
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True).encode()
+        ).hexdigest()
+
     def evaluate(self, world: WorldState, action: str, actor: str,
                  target: str) -> PolicyResult:
         """Evaluate policy top-down; accumulate dependencies from all fired rules."""
@@ -284,6 +300,7 @@ class Policy:
                     frozenset(all_deps),
                     work,
                     result.rule_name,
+                    policy_identity=self.identity,
                 )
         # Should never reach here (r_allow always fires).
         raise RuntimeError("Policy exhausted without verdict")

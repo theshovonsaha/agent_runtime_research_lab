@@ -1,0 +1,43 @@
+{
+  "benchmark": "Agent Runtime Research Lab v2",
+  "version": "2.0.0",
+  "seed": 20261013,
+  "scenarios": 400,
+  "repeats": 5,
+  "proof_rounds": 16,
+  "systems": [
+    "full_recompute",
+    "tapr_dep_cache",
+    "exact_snapshot_cache",
+    "coarse_cache",
+    "stale_proof_accept",
+    "no_commit_gate",
+    "pathless_policy"
+  ],
+  "safe_systems": [
+    "tapr_dep_cache",
+    "full_recompute"
+  ],
+  "unsafe_systems": [
+    "stale_proof_accept",
+    "no_commit_gate",
+    "exact_snapshot_cache",
+    "pathless_policy",
+    "coarse_cache"
+  ],
+  "mode": "offline synthetic stateful scenarios",
+  "safety": {
+    "network_access": false,
+    "external_side_effects": false,
+    "credentials_required": false,
+    "subprocesses_spawned": false,
+    "llm_invoked": false
+  },
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "timing_note": "Local microbenchmark only. Do not compare raw latency values across machines or against published benchmarks.",
+  "input_hashes": {
+    "scenarios.jsonl": "1adce3dde28f166ee910a58394fb98b710cc80312cf3202856a559b08907b7b3",
+    "decision_traces.csv": "310376a5dd41c35686f390d2e39e0335eec1aacf203c0e03d7ba8fa7396abdba",
+    "run_metrics.csv": "8b6b8e64e4332c01d2cf8ea91427bb9ad0a626b1596c96a2a3cd8a3e9255e61b"
+  }
+}

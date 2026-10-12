@@ -1,0 +1,56 @@
+{
+  "benchmark": "Agent Runtime Research Lab v2",
+  "version": "2.0.0",
+  "seed": 20261011,
+  "scenarios": 400,
+  "repeats": 5,
+  "proof_rounds": 16,
+  "systems": [
+    "full_recompute",
+    "tapr_dep_cache",
+    "exact_snapshot_cache",
+    "coarse_cache",
+    "stale_proof_accept",
+    "no_commit_gate",
+    "pathless_policy"
+  ],
+  "safe_systems": [
+    "tapr_dep_cache",
+    "full_recompute",
+    "exact_snapshot_cache"
+  ],
+  "unsafe_systems": [
+    "pathless_policy",
+    "no_commit_gate",
+    "stale_proof_accept",
+    "coarse_cache"
+  ],
+  "mode": "offline synthetic stateful scenarios",
+  "safety": {
+    "network_access": false,
+    "external_side_effects": false,
+    "credentials_required": false,
+    "subprocesses_spawned": false,
+    "llm_invoked": false
+  },
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "timing_note": "Local microbenchmark only. Do not compare raw latency values across machines or against published benchmarks.",
+  "input_hashes": {
+    "scenarios.jsonl": "accd4152baf06c0df50bbb6dd60e7532e4c90fc4b35adb95e56ecb8fcc623bdf",
+    "decision_traces.csv": "c3f545b83882c773f6d485f2b7e25f0245ffe3f3ae64fd78bd84e672b991de32",
+    "run_metrics.csv": "7cb674ce541595eabf295457252cf1b0d79468ded6af6726cf045e019c47ea32"
+  },
+  "lab_version": "2.0.0",
+  "paper_run_id": "run-20261012T025801Z",
+  "generated_at_utc": "2026-10-12T02:58:01.772184+00:00",
+  "python_runtime": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "benchmark_run_dir": "/Users/theshovonsaha/Developer/Github/agent_runtime_research_lab/results/validation-20261011-corrected",
+  "git_revision": "0e9e6eb8dd4f4d5f1d5cc3af8b8c8a0da01100c9",
+  "git_worktree_dirty": true,
+  "input_sha256": {
+    "run_metrics.csv": "7cb674ce541595eabf295457252cf1b0d79468ded6af6726cf045e019c47ea32",
+    "decision_traces.csv": "c3f545b83882c773f6d485f2b7e25f0245ffe3f3ae64fd78bd84e672b991de32",
+    "sweep.csv": null
+  }
+}

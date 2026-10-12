@@ -515,9 +515,15 @@ RUNTIME_REGISTRY = {
     "pathless_policy":      PathlessPolicyRuntime,
 }
 
-SAFE_SYSTEMS  = {"full_recompute", "tapr_dep_cache", "exact_snapshot_cache"}
+# Classification is specific to the benchmark's tested commit-boundary behavior.
+# It is not a universal production-safety guarantee.
+SAFE_SYSTEMS = {"full_recompute", "tapr_dep_cache"}
 UNSAFE_SYSTEMS = {
-    "coarse_cache", "stale_proof_accept", "no_commit_gate", "pathless_policy"
+    "exact_snapshot_cache",
+    "coarse_cache",
+    "stale_proof_accept",
+    "no_commit_gate",
+    "pathless_policy",
 }
 
 
