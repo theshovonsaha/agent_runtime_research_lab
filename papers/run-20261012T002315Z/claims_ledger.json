@@ -1,0 +1,20 @@
+{
+  "run_id": "run-20261012T002315Z",
+  "claims": [
+    {
+      "claim": "dependency-aware cache matches oracle in this synthetic run",
+      "evidence": "run_metrics.csv summary row",
+      "scope": "this implementation and workload only"
+    },
+    {
+      "claim": "full evaluations reduced relative to full recomputation",
+      "value_percent": 73.6,
+      "evidence": "summary full_evaluations values",
+      "scope": "this run only"
+    },
+    {
+      "claim": "publication readiness or acceptance",
+      "status": "not_claimed"
+    }
+  ]
+}

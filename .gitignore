@@ -1,0 +1,26 @@
+# Python & Environment
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# IDE & OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Lab dynamic caches & scratch
+.pytest_cache/
+*.log
+
+# Keep sample reports and figures in repo for immediate presentation
+!figures/*.png
+!figures/*.svg
+!results/REPORT.pdf
+!results/REPORT.md

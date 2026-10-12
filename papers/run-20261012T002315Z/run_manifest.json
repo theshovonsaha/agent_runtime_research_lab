@@ -1,0 +1,35 @@
+{
+  "benchmark": "Agent Runtime Research Lab",
+  "version": "0.1.0",
+  "seed": 20261011,
+  "cases": 2000,
+  "repeats": 7,
+  "proof_rounds": 24,
+  "mutation_rate": 0.22,
+  "systems": [
+    "full_recompute",
+    "exact_snapshot_cache",
+    "tapr_dependency_cache",
+    "coarse_cache_negative_control",
+    "pathless_policy_negative_control"
+  ],
+  "mode": "offline synthetic deterministic workload",
+  "safety": {
+    "network_access": false,
+    "external_side_effects": false,
+    "credentials_required": false,
+    "subprocesses_spawned": false
+  },
+  "python_version": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "timing_note": "Local microbenchmark only; do not compare raw latency to other machines or published figures.",
+  "lab_version": "0.2.0",
+  "paper_run_id": "run-20261012T002315Z",
+  "generated_at_utc": "2026-10-12T00:23:15.535762+00:00",
+  "python_runtime": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "input_sha256": {
+    "run_metrics.csv": "60b81afd5883bcb0bb4b93cc493c5b12ab371ec81cda3b979bd29706606dd9cc",
+    "decision_traces.csv": "2f4298bb79ac49a26aa4b2a12531ee5586bf130a0c9125d143d086d16241166f",
+    "sensitivity_sweep.csv": "32f2cea1bc61c46339cfe733bfaee650ebea6ac7d0760e913064d09b7869e734"
+  }
+}

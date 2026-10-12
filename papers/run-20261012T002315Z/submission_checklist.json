@@ -1,0 +1,37 @@
+{
+  "status": "NOT_CERTIFIED_FOR_SUBMISSION",
+  "checks": [
+    {
+      "item": "venue template applied",
+      "status": "required_manual"
+    },
+    {
+      "item": "all claims checked against raw outputs",
+      "status": "required_manual"
+    },
+    {
+      "item": "prior-art and related-work review complete",
+      "status": "not_done"
+    },
+    {
+      "item": "independent replication completed",
+      "status": "not_done"
+    },
+    {
+      "item": "ethics/data licensing/authorship confirmed",
+      "status": "required_manual"
+    },
+    {
+      "item": "artifact archived with permanent identifier and license",
+      "status": "not_done"
+    },
+    {
+      "item": "references verified and venue style applied",
+      "status": "required_manual"
+    },
+    {
+      "item": "statistical analysis independently reviewed",
+      "status": "required_manual"
+    }
+  ]
+}

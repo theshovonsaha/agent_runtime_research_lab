@@ -1,0 +1,13 @@
+{
+  "run_id": "run-20261012T005537Z",
+  "claims": [
+    {
+      "claim": "TAPR matches oracle across all valid scenarios",
+      "status": "verified_in_run"
+    },
+    {
+      "claim": "Full evaluations reduced by 36.6% vs recompute",
+      "status": "measured_in_run"
+    }
+  ]
+}

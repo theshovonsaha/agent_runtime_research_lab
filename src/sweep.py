@@ -1,0 +1,144 @@
+"""
+sweep.py – Parameter sensitivity sweep for the v2 benchmark.
+
+Varies four dimensions simultaneously:
+  - scenarios:     workload size
+  - proof_rounds:  simulated proof-construction cost
+  - scenario mix:  family weights (adversarial-heavy vs ordinary-heavy)
+
+Measures how TAPR and comparison systems respond as these parameters change.
+The key scientific questions:
+
+1. At what proof cost does TAPR's reuse advantage appear?
+2. Does TAPR's accuracy hold under heavier adversarial pressure?
+3. Does the exact snapshot cache perform better or worse than TAPR as
+   irrelevant metadata churn increases?
+
+Usage:
+    python src/sweep.py
+    python src/sweep.py --out results/sweep.csv --quick
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import random
+import statistics
+import sys
+from pathlib import Path
+from typing import Any, Dict, List
+
+_SRC = Path(__file__).resolve().parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+from benchmark import run_once, summarise
+from scenarios import generate_scenarios, FAMILIES
+
+
+# ---------------------------------------------------------------------------
+# Sweep configuration
+# ---------------------------------------------------------------------------
+
+SWEEP_SYSTEMS = [
+    "full_recompute",
+    "tapr_dep_cache",
+    "exact_snapshot_cache",
+    "coarse_cache",          # negative control (shows up as corner case)
+    "stale_proof_accept",    # negative control
+]
+
+# Workload mixes: (name, weights dict)
+MIXES = {
+    "uniform":     None,   # equal weight per family
+    "adversarial": {
+        "revocation":       5,
+        "evidence_expiry":  5,
+        "path_dependent":   4,
+        "retry_safety":     4,
+        "irrelevant_noise": 2,
+        "authorization":    1,
+    },
+    "noise_heavy": {
+        "irrelevant_noise": 8,
+        "authorization":    2,
+        "approval_escalation": 1,
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out",     default="results/sweep.csv")
+    ap.add_argument("--repeats", type=int, default=3)
+    ap.add_argument("--seed",    type=int, default=20260101)
+    ap.add_argument("--quick",   action="store_true")
+    a = ap.parse_args()
+
+    sizes  = [100, 300]        if a.quick else [200, 600, 1200]
+    costs  = [0, 8]            if a.quick else [0, 4, 16, 40]
+    repeats = min(a.repeats, 2) if a.quick else a.repeats
+    mixes  = ["uniform", "adversarial"] if a.quick else list(MIXES)
+
+    rows: List[Dict[str, Any]] = []
+    total = len(sizes) * len(costs) * len(mixes) * repeats
+    done  = 0
+
+    for n in sizes:
+        for cost in costs:
+            for mix_name in mixes:
+                weights = MIXES[mix_name]
+                for rep in range(repeats):
+                    seed = a.seed + n * 3 + cost * 31 + rep * 997 + hash(mix_name) % 1000
+                    scenarios = generate_scenarios(seed, n, weights=weights)
+                    recs = run_once(scenarios, cost, SWEEP_SYSTEMS, seed + 1)
+                    for sys_name in SWEEP_SYSTEMS:
+                        s = summarise(recs, sys_name, rep)
+                        if s:
+                            rows.append({
+                                "scenarios":   n,
+                                "proof_rounds": cost,
+                                "mix":         mix_name,
+                                "rep":         rep,
+                                "system":      sys_name,
+                                "accuracy":    s["accuracy"],
+                                "unsafe_allows": s["unsafe_allows"],
+                                "cache_hit_rate": s["cache_hit_rate"],
+                                "full_evaluations": s["full_evaluations"],
+                                "work_units":  s["work_units"],
+                                "mean_latency_ns": s["mean_latency_ns"],
+                                "stale_commit_accepts": s.get("stale_commit_accepts", 0),
+                            })
+                    done += 1
+                    print(f"  sweep {done}/{total}: n={n} cost={cost} "
+                          f"mix={mix_name} rep={rep}", flush=True)
+
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if rows:
+        keys = list(rows[0].keys())
+        with out.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=keys)
+            w.writeheader()
+            w.writerows(rows)
+    print(f"Wrote {len(rows)} sweep rows → {out.resolve()}")
+
+    # Quick aggregate print.
+    print("\n── Sweep summary (mean across all configs, for reference) ──")
+    for sys_name in SWEEP_SYSTEMS:
+        sr = [r for r in rows if r["system"] == sys_name]
+        if not sr:
+            continue
+        acc  = statistics.mean(r["accuracy"]        for r in sr)
+        hit  = statistics.mean(r["cache_hit_rate"]  for r in sr)
+        work = statistics.mean(r["work_units"]      for r in sr)
+        print(f"  {sys_name:<26} acc={acc:.1%}  hit={hit:.1%}  work={work:.0f}")
+
+
+if __name__ == "__main__":
+    main()
