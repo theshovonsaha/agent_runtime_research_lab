@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 import importlib.metadata
 import hashlib
 import json
-import os
 import platform
 import subprocess
 import sys
@@ -20,7 +19,14 @@ from .concurrent_gate import AtomicWorldStore
 from .oracle import evaluate as evaluate_oracle
 from .policy import DependencyContractError, Policy, PolicyResult
 from .proof import CheckCommitGate, NoCommitGate, Proof
-from .runtime import RUNTIME_REGISTRY, TAPRRuntime, make_runtime
+from .runtime import (
+    RUNTIME_REGISTRY,
+    SAFE_SYSTEMS,
+    UNSAFE_SYSTEMS,
+    FullRecomputeRuntime,
+    TAPRRuntime,
+    make_runtime,
+)
 from .scenarios import (
     CommitAttemptEvent,
     PolicyRolloverEvent,
@@ -82,6 +88,12 @@ def _record_probe_a(seed: int) -> dict[str, Any]:
         proof, policy, CheckCommitGate(), timestamp=1
     )
     safe_attempt = dataclasses.asdict(store.traces[-1])
+    revoked_snapshot = store.get_snapshot()
+    recompute_runtime = FullRecomputeRuntime(policy)
+    recomputed = recompute_runtime.decide(
+        revoked_snapshot, "write", "agent-0", "resource-0"
+    )
+    recompute_runtime.commit(recomputed, None, revoked_snapshot)
 
     negative_store = AtomicWorldStore(world)
     negative_store.mutate_fact(
@@ -118,6 +130,83 @@ def _record_probe_a(seed: int) -> dict[str, Any]:
         effect_outcome="failed",
     )
 
+    mutation_blocked: list[bool] = []
+    scripted_steps = ["authorize proof", "attempt revocation before effect"]
+
+    class PausingStore(AtomicWorldStore):
+        def _before_effect_recording(self) -> None:
+            acquired = self._lock.acquire(blocking=False)
+            mutation_blocked.append(not acquired)
+            if acquired:
+                self._lock.release()
+                self.mutate_fact(
+                    "authorized", "agent-0", False,
+                    "commit_race_revocation",
+                )
+
+    race_world = _base_world()
+    race_policy = Policy(version=race_world.policy_version)
+    race_result_policy = race_policy.evaluate(
+        race_world, "write", "agent-0", "resource-0"
+    )
+    race_proof = Proof.from_result(
+        race_result_policy,
+        "commit-mutation-race",
+        "write",
+        "agent-0",
+        "resource-0",
+        race_world,
+    )
+    race_store = PausingStore(race_world)
+
+    commit_result = race_store.commit_effect(
+        race_proof, race_policy, CheckCommitGate(), timestamp=4
+    )
+    serialized_reference = FullRecomputeRuntime(race_policy)
+    reference_record = serialized_reference.decide(
+        race_world, "write", "agent-0", "resource-0"
+    )
+    serialized_reference.commit(reference_record, None, race_world)
+    reference_final_world = race_world.with_fact(
+        Fact("authorized", "agent-0", False, 2, "commit_race_revocation")
+    )
+    scripted_steps.append("record authorized effect")
+    if mutation_blocked[0]:
+        race_store.mutate_fact(
+            "authorized", "agent-0", False, "commit_race_revocation"
+        )
+        scripted_steps.append("apply deferred revocation")
+
+    race_snapshot = race_store.get_snapshot()
+    serialized_race = {
+        "mutation_blocked_during_authorized_effect": mutation_blocked[0],
+        "commit_approved": commit_result[0].approved,
+        "full_recompute_commit_approved": reference_record.commit_approved,
+        "decision_matches_full_recompute": (
+            commit_result[0].approved == reference_record.commit_approved
+        ),
+        "effect_occurred": commit_result[1],
+        "full_recompute_effect_occurred": (
+            reference_record.commit_approved is True
+        ),
+        "mutation_completed": race_snapshot.get("authorized", "agent-0") is False,
+        "effect_count": race_snapshot.count_effects("write", "resource-0"),
+        "full_recompute_effect_count": int(
+            reference_record.commit_approved is True
+        ),
+        "final_authorized": race_snapshot.get("authorized", "agent-0"),
+        "full_recompute_final_authorized": reference_final_world.get(
+            "authorized", "agent-0"
+        ),
+        "final_state_matches_full_recompute": (
+            race_snapshot.get("authorized", "agent-0")
+            == reference_final_world.get("authorized", "agent-0")
+        ),
+        "interleaving": race_store._interleaving,
+        "scripted_steps": scripted_steps,
+        "trace": dataclasses.asdict(race_store.traces[0]),
+    }
+
     cas_world = _base_world()
     cas_store = AtomicWorldStore(cas_world)
     initial = cas_store.get_snapshot()
@@ -144,6 +233,17 @@ def _record_probe_a(seed: int) -> dict[str, Any]:
                 "write", "resource-0"
             ),
             "oracle_verdict": observed,
+            "full_recompute_verdict": recomputed.verdict,
+            "full_recompute_commit_approved": recomputed.commit_approved,
+            "full_recompute_effect_occurred": (
+                recomputed.commit_approved is True
+            ),
+            "effect_matches_full_recompute": (
+                occurred == (recomputed.commit_approved is True)
+            ),
+            "decision_matches_full_recompute": (
+                blocked.approved == recomputed.commit_approved
+            ),
             "trace": safe_attempt,
             "final_world": _world_dict(store.get_snapshot()),
         },
@@ -168,6 +268,7 @@ def _record_probe_a(seed: int) -> dict[str, Any]:
             "trace": dataclasses.asdict(failed_store.traces[-1]),
             "final_world": _world_dict(failed_store.get_snapshot()),
         },
+        "commit_mutation_race": serialized_race,
         "competing_updates": {
             "attempts": [
                 {"expected_version": initial.world_version, "accepted": result}
@@ -271,7 +372,8 @@ def _record_probe_b(seed: int) -> tuple[list[dict], list[dict]]:
             runtime.commit(commit_record, None, current)
             commit_latency = time.perf_counter_ns() - commit_started
             commit_expected = evaluate_oracle(
-                current, action, "agent-0", commit_target
+                current, action, "agent-0", commit_target,
+                active_policy_version=runtime.policy.version,
             ).commit_authorized
             commit_observed = bool(commit_record.commit_approved)
             disagreement = (
@@ -635,12 +737,10 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
         return result.stdout.strip()
 
     source_files = [
-        repo_root / "src" / "benchmark.py",
-        repo_root / "src" / "sweep.py",
-        repo_root / "src" / "analyze.py",
-        repo_root / "src" / "paper.py",
-        *sorted((repo_root / "src" / "tapr").glob("*.py")),
-        repo_root / "tests" / "test_research_hardening.py",
+        *sorted((repo_root / "src").rglob("*.py")),
+        *sorted((repo_root / "tests").rglob("*.py")),
+        repo_root / "README.md",
+        repo_root / "RESEARCH_CHARTER.md",
     ]
     source_checksums = {
         str(path.relative_to(repo_root)): hashlib.sha256(
@@ -659,6 +759,12 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
         "seed": seed,
         "probe_a": {
             "safe_stale_effect_occurred": probe_a["stale_proof"]["effect_occurred"],
+            "stale_outcome_matches_full_recompute": probe_a["stale_proof"][
+                "decision_matches_full_recompute"
+            ],
+            "stale_effect_matches_full_recompute": probe_a["stale_proof"][
+                "effect_matches_full_recompute"
+            ],
             "unsafe_control_effect_occurred": probe_a[
                 "unsafe_negative_control"
             ]["effect_occurred"],
@@ -669,14 +775,46 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
             "failed_effect_count": probe_a["failed_effect"]["trace"][
                 "effect_count"
             ],
+            "mutation_blocked_during_authorized_effect": probe_a[
+                "commit_mutation_race"
+            ]["mutation_blocked_during_authorized_effect"],
+            "race_outcome_matches_full_recompute": probe_a[
+                "commit_mutation_race"
+            ]["decision_matches_full_recompute"],
+            "race_final_state_matches_full_recompute": probe_a[
+                "commit_mutation_race"
+            ]["final_state_matches_full_recompute"],
+            "commit_mutation_race_effect_count": probe_a[
+                "commit_mutation_race"
+            ]["effect_count"],
         },
         "probe_b_cases": len(probe_b),
         "probe_b_oracle_disagreements": sum(
             bool(row["oracle_disagreement"]) for row in probe_b
         ),
+        "probe_b_disagreements_by_system": {
+            system: sum(
+                bool(row["oracle_disagreement"])
+                for row in probe_b if row["system"] == system
+            )
+            for system in systems
+        },
         "probe_c_configurations": len(fuzz_metrics),
         "probe_c_decision_records": len(fuzz_cases),
         "counterexample_count": len(counterexamples),
+        "candidate_counterexample_count": sum(
+            case["system"] in SAFE_SYSTEMS for case in counterexamples
+        ),
+        "expected_negative_control_counterexample_count": sum(
+            case["system"] in UNSAFE_SYSTEMS for case in counterexamples
+        ),
+        "probe_c_disagreements_by_system": {
+            system: sum(
+                not record["correct"] or record["commit_correct"] is False
+                for record in fuzz_cases if record["system"] == system
+            )
+            for system in systems
+        },
         "runtime_variants": systems,
     }
     (out_dir / "falsification_summary.json").write_text(
@@ -689,6 +827,8 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
     }
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "command_line": [sys.executable, *sys.argv],
+        "seed": seed,
         "baseline": {
             "git_revision": "743273347b416059ea2b7abca6ac9bf82552c5a3",
             "worktree_clean": True,
@@ -705,6 +845,7 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
             "processor": platform.processor(),
             "python": sys.version,
         },
+        "python_version": sys.version,
         "dependencies": dependencies,
         "run_configuration": {
             "seed": seed,
@@ -712,8 +853,13 @@ def run(seed: int, out_dir: Path) -> dict[str, Any]:
             "repetitions_per_profile": 2,
             "proof_rounds": 8,
             "profiles": list(profiles),
+            "profile_family_weights": profiles,
             "runtime_variants": systems,
             "oracle": "tapr.oracle.evaluate",
+            "seed_derivation": (
+                "seed + profile_index*100003 + scenario_size*101 + repetition; "
+                "run_once seed adds 1000003"
+            ),
         },
         "source_sha256": source_checksums,
         "generated_artifact_sha256": generated_checksums,

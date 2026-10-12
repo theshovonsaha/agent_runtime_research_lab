@@ -42,9 +42,12 @@ from __future__ import annotations
 import argparse
 import csv
 import dataclasses
+import importlib.metadata
 import json
+import platform
 import random
 import statistics
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -77,6 +80,7 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
     Returns the list of DecisionRecords produced (one per ProposalEvent).
     """
     runtime.reset()
+    runtime.policy = policy
     world = scenario.initial_world
     records: List[DecisionRecord] = []
     # proposal_index -> (DecisionRecord, world_at_proposal_time)
@@ -127,7 +131,8 @@ def replay_scenario(scenario: Scenario, runtime, policy: Policy,
             rec = runtime.commit(rec, None, world)
             rec.commit_latency_ns = time.perf_counter_ns() - commit_started
             oracle_result = evaluate_oracle(
-                world, rec.action, rec.actor, rec.target
+                world, rec.action, rec.actor, rec.target,
+                active_policy_version=runtime.policy.version,
             )
             rec.commit_expected_approved = oracle_result.commit_authorized
             rec.commit_correct = (
@@ -195,6 +200,10 @@ def summarise(records: List[DecisionRecord], system: str, rep: int) -> Dict[str,
     # Commit gate metrics (only for records with commit data).
     commit_recs = [r for r in recs if r.commit_approved is not None]
     stale_commits = sum(r.stale_commit_accept for r in commit_recs)
+    commit_false_denials = sum(
+        r.commit_approved is False and r.commit_expected_approved is True
+        for r in commit_recs
+    )
     commit_correct = (sum(r.commit_correct for r in commit_recs)
                       if commit_recs else 0)
     effects = [r for r in commit_recs if r.effect_occurred]
@@ -231,6 +240,10 @@ def summarise(records: List[DecisionRecord], system: str, rep: int) -> Dict[str,
         "p99_latency_ns":      pct(lats, 0.99),
         "commit_attempts":     len(commit_recs),
         "stale_commit_accepts": stale_commits,
+        "commit_false_denies": commit_false_denials,
+        "commit_false_deny_rate": (
+            commit_false_denials / len(commit_recs) if commit_recs else 0.0
+        ),
         "commit_gate_correct": commit_correct,
         "commit_accuracy":     commit_correct / len(commit_recs) if commit_recs else 0.0,
         "effects":             len(effects),
@@ -371,9 +384,22 @@ def main() -> None:
         if not p.exists(): return ""
         return _hl.sha256(p.read_bytes()).hexdigest()
 
+    def _version(distribution: str) -> Optional[str]:
+        try:
+            return importlib.metadata.version(distribution)
+        except importlib.metadata.PackageNotFoundError:
+            return None
+
+    repo_root = Path(__file__).resolve().parents[1]
+    source_checksums = {
+        str(path.relative_to(repo_root)): _sha(path)
+        for source_root in (repo_root / "src", repo_root / "tests")
+        for path in sorted(source_root.rglob("*.py"))
+    }
     manifest = {
         "benchmark":     "Agent Runtime Research Lab v2",
         "version":       "2.0.0",
+        "command_line":  [sys.executable, *sys.argv],
         "seed":          a.seed,
         "scenarios":     a.scenarios,
         "repeats":       a.repeats,
@@ -390,6 +416,22 @@ def main() -> None:
             "llm_invoked":           False,
         },
         "python_version": sys.version,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+        "source_revision": subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root,
+            text=True, capture_output=True, check=False,
+        ).stdout.strip() or None,
+        "worktree_status": subprocess.run(
+            ["git", "status", "--short"], cwd=repo_root,
+            text=True, capture_output=True, check=False,
+        ).stdout.strip(),
+        "dependencies": {
+            package: _version(package)
+            for package in ("numpy", "matplotlib", "pytest")
+        },
+        "source_sha256": source_checksums,
         "timing_note":    (
             "Local microbenchmark only. Do not compare raw latency values "
             "across machines or against published benchmarks."
@@ -398,7 +440,13 @@ def main() -> None:
             "scenarios.jsonl":    _sha(sc_path),
             "decision_traces.csv": _sha(trace_path),
             "run_metrics.csv":    _sha(metrics_path),
+            "family_accuracy.csv": _sha(out / "family_accuracy.csv"),
         },
+    }
+    manifest["output_sha256"] = {
+        path.name: _sha(path)
+        for path in sorted(out.iterdir())
+        if path.is_file() and path.name != "manifest.json"
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 

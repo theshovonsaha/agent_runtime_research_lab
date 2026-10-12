@@ -81,6 +81,53 @@ Given equivalent policy semantics and the same current state, dependency-aware p
 
 The hypothesis fails if dependency discovery costs more than recomputation across realistic workloads, if dependency declarations cannot be kept complete, or if concurrent/distributed invalidation cannot be made reliable.
 
+## Current falsification protocol
+
+The repository's runtime implementation is `src/tapr/`; top-level modules in
+`src/` are compatibility imports. Ordered policy evaluation must record the
+facts inspected by every earlier nonmatching rule as well as the matched
+rule. `required_fact_keys()` is derived by replaying the same rule functions
+used by evaluation, so the dependency contract is not a second handwritten
+rule-order table. `src/tapr/oracle.py` is the measurement oracle: it directly
+recomputes proposal and commit expectations from world state and does not
+import policy, cache, proof, or gate logic. The oracle is still based on the
+same human-authored policy specification and is not an independent
+specification review.
+
+The deterministic test suite uses exhaustive finite-state mutation for the
+small precedence state space and explicit scripted commit interleavings.
+Pass/fail assertions do not depend on wall-clock timing, thread scheduling, or
+unseeded randomness. `src/concurrent_harness.py` remains a separate
+scheduling-dependent stress tool; its counts are observational and not a
+test oracle. Fuzz and benchmark manifests record fixed seeds, commands,
+source/worktree metadata, environment versions, and artifact checksums.
+
+The recorded mutation-sensitivity pass applied and then reverted each mutant
+individually. All five were killed: unconditional gate approval by the stale
+proof regressions; check/mutate split outside the lock by
+`test_scripted_commit_mutation_interleaving_is_atomic`; omission of
+`evidence_fresh` by the exhaustive metamorphic dependency test; removal of
+policy version from the cache key by the policy-version regression; and an
+oracle import of `Policy` by `test_oracle_is_independent_of_policy_implementation`.
+This is sensitivity evidence for those concrete mutants, not a completeness
+proof. A later end-to-end benchmark also exposed policy-state leakage between
+scenario replays; `test_benchmark_runtime_isolation.py` pins the corrected
+reset behavior and exact-snapshot fail-closed behavior.
+
+Run `./run_lab.sh` for both test entry points, Probes A-C, benchmark,
+optional sensitivity sweep, report/figure generation, and timestamped paper
+bundle generation. Set `SCENARIOS`, `REPEATS`, `PROOF_ROUNDS`, `SEED`, and
+`RUN_SWEEP` to configure a run. Results and papers are created in new
+timestamped directories; historical evidence is retained.
+
+These probes can reveal counterexamples but cannot prove completeness over
+unbounded policies or states. The current atomicity model is a single-process
+in-memory lock around authorization and simulated-effect recording. It does
+not prove atomicity for distributed storage, real adapters, crash recovery,
+timeouts, or partial external effects. Latency measurements are
+machine-specific observations, not pass/fail assertions or external
+benchmark comparisons.
+
 ## Research guardrails
 
 - No novelty claim from this simulator alone.

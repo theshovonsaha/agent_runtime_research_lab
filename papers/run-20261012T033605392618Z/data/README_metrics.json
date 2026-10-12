@@ -1,0 +1,31 @@
+{
+  "benchmark": {
+    "full_commit_accuracy": 1.0,
+    "full_proposal_accuracy": 1.0,
+    "tapr_commit_accuracy": 1.0,
+    "tapr_proposal_accuracy": 1.0
+  },
+  "profiles": [
+    {
+      "decisions": 1063,
+      "full_cache_hit_rate": 0.0,
+      "hit_rate_difference": 0.8344308560677328,
+      "profile": "high_reuse",
+      "tapr_cache_hit_rate": 0.8344308560677328
+    },
+    {
+      "decisions": 176,
+      "full_cache_hit_rate": 0.0,
+      "hit_rate_difference": 0.0,
+      "profile": "low_reuse",
+      "tapr_cache_hit_rate": 0.0
+    }
+  ],
+  "run_dir": "results/hardening-20261012T033559Z",
+  "seed": 20261011,
+  "source_csv_sha256": {
+    "probe_c_metrics.csv": "f0472bf1db641d5940423108defd181e16d884ad7c20c8ae89702834e38c9f9e",
+    "run_metrics.csv": "35b37fd39d4f3c05954bf30d40664614f7fc40f12b0ec0cd9aa58a352bf68440"
+  },
+  "source_revision": "1c4fa839036b5dfe16d610ab930c7dc08a6748d0"
+}

@@ -1,0 +1,497 @@
+{
+  "atomicity_scope": "single-process in-memory lock; no distributed guarantee",
+  "commit_mutation_race": {
+    "commit_approved": true,
+    "effect_count": 1,
+    "effect_occurred": true,
+    "final_authorized": false,
+    "interleaving": [
+      "effect_attempt:write:resource-0:success:world1",
+      "mutation:authorized:agent-0:v2:world2"
+    ],
+    "mutation_blocked_during_authorized_effect": true,
+    "mutation_completed": true,
+    "scripted_steps": [
+      "authorize proof",
+      "attempt revocation before effect",
+      "record authorized effect",
+      "apply deferred revocation"
+    ],
+    "trace": {
+      "attempt": 1,
+      "decision": true,
+      "effect_count": 1,
+      "effect_occurred": true,
+      "effect_outcome": "success",
+      "expected_authorized": true,
+      "interleaving": [
+        "effect_attempt:write:resource-0:success:world1"
+      ],
+      "oracle_disagreement": false,
+      "proof_id": "commit-mutation-race",
+      "proof_policy_version": 1,
+      "proof_state_version": 0,
+      "reason": "proof_valid",
+      "state_version_after": 1,
+      "state_version_before": 0
+    }
+  },
+  "competing_updates": {
+    "accepted_count": 1,
+    "attempts": [
+      {
+        "accepted": true,
+        "expected_version": 0
+      },
+      {
+        "accepted": false,
+        "expected_version": 0
+      }
+    ],
+    "final_world": {
+      "facts": [
+        {
+          "name": "approval",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "authorized",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "evidence_fresh",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "metadata_version",
+          "provenance": "competing-a",
+          "subject": "resource-0",
+          "value": 2,
+          "version": 2
+        },
+        {
+          "name": "parent_scope_ok",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "path_tag",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": "ordinary",
+          "version": 1
+        },
+        {
+          "name": "prior_effect_succeeded",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "prior_sensitive_read",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "protected",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "retention_hold",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        }
+      ],
+      "path": [],
+      "policy_version": 1,
+      "world_version": 1
+    },
+    "interleaving": [
+      "cas:0->1:success",
+      "cas:0:failed_at:1"
+    ]
+  },
+  "failed_effect": {
+    "authorization_approved": true,
+    "effect_occurred": false,
+    "final_world": {
+      "facts": [
+        {
+          "name": "approval",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "authorized",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "evidence_fresh",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "metadata_version",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": 1,
+          "version": 1
+        },
+        {
+          "name": "parent_scope_ok",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "path_tag",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": "ordinary",
+          "version": 1
+        },
+        {
+          "name": "prior_effect_succeeded",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "prior_sensitive_read",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "protected",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "retention_hold",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        }
+      ],
+      "path": [
+        {
+          "action": "read",
+          "actor": "agent-0",
+          "outcome": "failed",
+          "target": "resource-0",
+          "timestamp": 3
+        }
+      ],
+      "policy_version": 1,
+      "world_version": 1
+    },
+    "trace": {
+      "attempt": 1,
+      "decision": true,
+      "effect_count": 0,
+      "effect_occurred": false,
+      "effect_outcome": "failed",
+      "expected_authorized": true,
+      "interleaving": [
+        "effect_attempt:read:resource-0:failed:world1"
+      ],
+      "oracle_disagreement": false,
+      "proof_id": "reusable",
+      "proof_policy_version": 1,
+      "proof_state_version": 0,
+      "reason": "effect_failed",
+      "state_version_after": 1,
+      "state_version_before": 0
+    }
+  },
+  "reusable_proof": {
+    "effect_count": 2,
+    "first_effect": true,
+    "second_effect": true,
+    "trace": [
+      {
+        "attempt": 1,
+        "decision": true,
+        "effect_count": 1,
+        "effect_occurred": true,
+        "effect_outcome": "success",
+        "expected_authorized": true,
+        "interleaving": [
+          "effect_attempt:read:resource-0:success:world1"
+        ],
+        "oracle_disagreement": false,
+        "proof_id": "reusable",
+        "proof_policy_version": 1,
+        "proof_state_version": 0,
+        "reason": "proof_valid",
+        "state_version_after": 1,
+        "state_version_before": 0
+      },
+      {
+        "attempt": 2,
+        "decision": true,
+        "effect_count": 2,
+        "effect_occurred": true,
+        "effect_outcome": "success",
+        "expected_authorized": true,
+        "interleaving": [
+          "effect_attempt:read:resource-0:success:world1",
+          "effect_attempt:read:resource-0:success:world2"
+        ],
+        "oracle_disagreement": false,
+        "proof_id": "reusable",
+        "proof_policy_version": 1,
+        "proof_state_version": 0,
+        "reason": "proof_valid",
+        "state_version_after": 2,
+        "state_version_before": 1
+      }
+    ]
+  },
+  "seed": 20261012,
+  "stale_proof": {
+    "commit_approved": false,
+    "effect_count": 0,
+    "effect_occurred": false,
+    "final_world": {
+      "facts": [
+        {
+          "name": "approval",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "authorized",
+          "provenance": "probe_revocation",
+          "subject": "agent-0",
+          "value": false,
+          "version": 2
+        },
+        {
+          "name": "evidence_fresh",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "metadata_version",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": 1,
+          "version": 1
+        },
+        {
+          "name": "parent_scope_ok",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "path_tag",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": "ordinary",
+          "version": 1
+        },
+        {
+          "name": "prior_effect_succeeded",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "prior_sensitive_read",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "protected",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "retention_hold",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        }
+      ],
+      "path": [],
+      "policy_version": 1,
+      "world_version": 1
+    },
+    "oracle_verdict": "DENY",
+    "proof_world_version": 0,
+    "state_version_after_revocation": 1,
+    "trace": {
+      "attempt": 1,
+      "decision": false,
+      "effect_count": 0,
+      "effect_occurred": false,
+      "effect_outcome": "not_attempted",
+      "expected_authorized": false,
+      "interleaving": [
+        "mutation:authorized:agent-0:v2:world1"
+      ],
+      "oracle_disagreement": false,
+      "proof_id": "fb7e4853",
+      "proof_policy_version": 1,
+      "proof_state_version": 0,
+      "reason": "recomputed",
+      "state_version_after": 1,
+      "state_version_before": 1
+    }
+  },
+  "unsafe_negative_control": {
+    "commit_approved": true,
+    "effect_occurred": true,
+    "final_world": {
+      "facts": [
+        {
+          "name": "approval",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "authorized",
+          "provenance": "probe_revocation",
+          "subject": "agent-0",
+          "value": false,
+          "version": 2
+        },
+        {
+          "name": "evidence_fresh",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "metadata_version",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": 1,
+          "version": 1
+        },
+        {
+          "name": "parent_scope_ok",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": true,
+          "version": 1
+        },
+        {
+          "name": "path_tag",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": "ordinary",
+          "version": 1
+        },
+        {
+          "name": "prior_effect_succeeded",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "prior_sensitive_read",
+          "provenance": "initial",
+          "subject": "agent-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "protected",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        },
+        {
+          "name": "retention_hold",
+          "provenance": "initial",
+          "subject": "resource-0",
+          "value": false,
+          "version": 1
+        }
+      ],
+      "path": [
+        {
+          "action": "write",
+          "actor": "agent-0",
+          "outcome": "success",
+          "target": "resource-0",
+          "timestamp": 1
+        }
+      ],
+      "policy_version": 1,
+      "world_version": 2
+    },
+    "oracle_verdict": "DENY",
+    "trace": {
+      "attempt": 1,
+      "decision": true,
+      "effect_count": 1,
+      "effect_occurred": true,
+      "effect_outcome": "success",
+      "expected_authorized": false,
+      "interleaving": [
+        "mutation:authorized:agent-0:v2:world1",
+        "effect_attempt:write:resource-0:success:world2"
+      ],
+      "oracle_disagreement": true,
+      "proof_id": "fb7e4853",
+      "proof_policy_version": 1,
+      "proof_state_version": 0,
+      "reason": "no_gate_accepted",
+      "state_version_after": 2,
+      "state_version_before": 1
+    }
+  }
+}

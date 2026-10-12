@@ -1,0 +1,46 @@
+{
+  "candidate_counterexample_count": 0,
+  "counterexample_count": 1110,
+  "expected_negative_control_counterexample_count": 1110,
+  "probe_a": {
+    "commit_mutation_race_effect_count": 1,
+    "competing_cas_successes": 1,
+    "failed_effect_count": 0,
+    "mutation_blocked_during_authorized_effect": true,
+    "reusable_effect_count": 2,
+    "safe_stale_effect_occurred": false,
+    "unsafe_control_effect_occurred": true
+  },
+  "probe_b_cases": 85,
+  "probe_b_disagreements_by_system": {
+    "coarse_cache": 9,
+    "exact_snapshot_cache": 0,
+    "full_recompute": 0,
+    "no_commit_gate": 9,
+    "pathless_policy": 9,
+    "stale_proof_accept": 9,
+    "tapr_dep_cache": 0
+  },
+  "probe_b_oracle_disagreements": 36,
+  "probe_c_configurations": 252,
+  "probe_c_decision_records": 21882,
+  "probe_c_disagreements_by_system": {
+    "coarse_cache": 311,
+    "exact_snapshot_cache": 0,
+    "full_recompute": 0,
+    "no_commit_gate": 138,
+    "pathless_policy": 314,
+    "stale_proof_accept": 311,
+    "tapr_dep_cache": 0
+  },
+  "runtime_variants": [
+    "full_recompute",
+    "tapr_dep_cache",
+    "exact_snapshot_cache",
+    "coarse_cache",
+    "stale_proof_accept",
+    "no_commit_gate",
+    "pathless_policy"
+  ],
+  "seed": 20261011
+}

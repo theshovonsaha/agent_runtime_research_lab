@@ -334,6 +334,7 @@ class CheckCommitGate:
                     proof.rule_name,
                     proof.policy_identity,
                 ),
+                current_world,
                 proof.action,
                 proof.actor,
                 proof.target,
@@ -356,7 +357,7 @@ class CheckCommitGate:
             proof.target,
         )
         policy.validate_dependencies(
-            result, proof.action, proof.actor, proof.target
+            result, current_world, proof.action, proof.actor, proof.target
         )
         new_proof = Proof.from_result(
             result,

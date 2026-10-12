@@ -140,7 +140,9 @@ class RuntimeBase:
     def _evaluate(self, world: WorldState, action: str, actor: str,
                   target: str) -> PolicyResult:
         result = self.policy.evaluate(world, action, actor, target)
-        self.policy.validate_dependencies(result, action, actor, target)
+        self.policy.validate_dependencies(
+            result, world, action, actor, target
+        )
         return result
 
     @property
@@ -175,6 +177,11 @@ class FullRecomputeRuntime(RuntimeBase):
 
     def commit(self, record, proof, world):
         # Full recompute has no caching, so commit just re-evaluates.
+        if world.policy_version != self.policy.version:
+            record.commit_approved = False
+            record.commit_reason = "policy_version_mismatch"
+            record.commit_work_units = 0
+            return record
         result = self._evaluate(
             world, record.action, record.actor, record.target
         )
@@ -217,6 +224,7 @@ class TAPRRuntime(RuntimeBase):
                     cached.rule_name,
                     cached.policy_identity,
                 ),
+                world,
                 action,
                 actor,
                 target,
@@ -338,6 +346,12 @@ class ExactSnapshotRuntime(RuntimeBase):
         return rec
 
     def commit(self, record, proof, world):
+        if world.policy_version != self.policy.version:
+            record.commit_approved = False
+            record.commit_reason = "policy_version_mismatch"
+            record.commit_work_units = 0
+            return record
+
         snapshot = self._proposal_snapshots.get(
             f"{record.scenario_id}-{record.step_index}"
         )

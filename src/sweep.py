@@ -22,8 +22,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime
 import hashlib
+import importlib.metadata
+import json
+import platform
 import statistics
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -164,6 +169,52 @@ def main():
             w = csv.DictWriter(f, fieldnames=keys)
             w.writeheader()
             w.writerows(rows)
+    repo_root = Path(__file__).resolve().parents[1]
+    source_checksums = {
+        str(path.relative_to(repo_root)): hashlib.sha256(path.read_bytes()).hexdigest()
+        for source_root in (repo_root / "src", repo_root / "tests")
+        for path in sorted(source_root.rglob("*.py"))
+        if path.is_file()
+    }
+    dependencies = {}
+    for package in ("pytest", "numpy", "matplotlib"):
+        try:
+            dependencies[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            dependencies[package] = None
+    out_sha256 = hashlib.sha256(out.read_bytes()).hexdigest() if out.exists() else None
+    manifest = {
+        "generated_at_utc": datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat(),
+        "command_line": [sys.executable, *sys.argv],
+        "seed": a.seed,
+        "configuration": {
+            "sizes": sizes,
+            "proof_costs": costs,
+            "repeats": repeats,
+            "mixes": mixes,
+            "systems": SWEEP_SYSTEMS,
+            "quick": a.quick,
+        },
+        "source_revision": subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repo_root,
+            text=True, capture_output=True, check=False,
+        ).stdout.strip() or None,
+        "worktree_dirty": bool(subprocess.run(
+            ["git", "status", "--porcelain"], cwd=repo_root,
+            text=True, capture_output=True, check=False,
+        ).stdout.strip()),
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "dependencies": dependencies,
+        "source_sha256": source_checksums,
+        "output_sha256": {out.name: out_sha256},
+        "manifest_checksum_scope": "sweep_manifest.json excludes its own checksum",
+    }
+    (out.parent / "sweep_manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    )
     print(f"Wrote {len(rows)} sweep rows → {out.resolve()}")
 
     # Quick aggregate print.

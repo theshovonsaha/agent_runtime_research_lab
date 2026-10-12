@@ -1,0 +1,26 @@
+{
+  "counterexample_count": 1560,
+  "probe_a": {
+    "commit_mutation_race_effect_count": 1,
+    "competing_cas_successes": 1,
+    "failed_effect_count": 0,
+    "mutation_blocked_during_authorized_effect": true,
+    "reusable_effect_count": 2,
+    "safe_stale_effect_occurred": false,
+    "unsafe_control_effect_occurred": true
+  },
+  "probe_b_cases": 85,
+  "probe_b_oracle_disagreements": 36,
+  "probe_c_configurations": 252,
+  "probe_c_decision_records": 21882,
+  "runtime_variants": [
+    "full_recompute",
+    "tapr_dep_cache",
+    "exact_snapshot_cache",
+    "coarse_cache",
+    "stale_proof_accept",
+    "no_commit_gate",
+    "pathless_policy"
+  ],
+  "seed": 20261011
+}

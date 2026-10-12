@@ -362,8 +362,8 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         "",
         "## Results",
         "",
-        "| System | Proposal accuracy | Unsafe ALLOW | Commit accuracy | Stale accepts | Effects | Unsafe effects | Cache hit | Full evals | Work units | Proposal mean μs | Commit p95 μs |",
-        "|--------|-------------------:|-------------:|----------------:|---------------:|--------:|---------------:|----------:|-----------:|-----------:|-----------------:|--------------:|",
+        "| System | Proposal accuracy | Unsafe ALLOW | Commit accuracy | Commit false denies | Stale accepts | Effects | Unsafe effects | Cache hit | Full evals | Work units | Proposal mean μs | Commit p95 μs |",
+        "|--------|-------------------:|-------------:|----------------:|--------------------:|---------------:|--------:|---------------:|----------:|-----------:|-----------:|-----------------:|--------------:|",
     ]
 
     for s in systems:
@@ -378,6 +378,9 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         stale = statistics.mean(
             _vals(rows, s, "stale_commit_accepts") or [0]
         )
+        commit_false_denies = statistics.mean(
+            _vals(rows, s, "commit_false_denies") or [0]
+        )
         effects = statistics.mean(_vals(rows, s, "effects") or [0])
         unsafe_effects = statistics.mean(
             _vals(rows, s, "unsafe_effects") or [0]
@@ -391,7 +394,8 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         tag  = " ⚠" if s in UNSAFE_SYSTEMS else ""
         lines.append(
             f"| {_label(s)}{tag} | {acc:.1%} | {uns:.1f} | "
-            f"{commit_acc:.1%} | {stale:.1f} | {effects:.1f} | "
+            f"{commit_acc:.1%} | {commit_false_denies:.1f} | "
+            f"{stale:.1f} | {effects:.1f} | "
             f"{unsafe_effects:.1f} | {hit:.1%} | {work:.0f} | "
             f"{work_units:.1f} | {lat:.2f} | {commit_p95:.2f} |"
         )
@@ -427,8 +431,10 @@ def generate_report(rows, systems, family_rows, out_path: Path) -> None:
         "(independent sample unit).",
         "- Use the adjacent `manifest.json` for the exact source revision, worktree "
         "status, versions, configuration, and raw artifact checksums.",
-        "- Reproduce with `./reproduce_research.sh --seed <recorded-seed>`; "
-        "outputs are written to a new timestamped directory.",
+        "- Reproduce using the positional configuration in "
+        "`manifest.json`, e.g. `PYTHON=.venv/bin/python "
+        "./reproduce_research.sh <seed> 400 5 16 1`; outputs are written "
+        "to a new timestamped directory.",
         "",
     ]
 

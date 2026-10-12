@@ -76,6 +76,9 @@ class AtomicWorldStore:
         with self._lock:
             return self._world
 
+    def _before_effect_recording(self) -> None:
+        """Synchronization seam for deterministic tests of the commit boundary."""
+
     def compare_and_swap(self, expected_version: int, new_world: WorldState) -> bool:
         """Atomic Compare-And-Swap conditioned on world_version."""
         with self._lock:
@@ -130,7 +133,8 @@ class AtomicWorldStore:
         with self._lock:
             current = self._world
             expected = evaluate_oracle(
-                current, proof.action, proof.actor, proof.target
+                current, proof.action, proof.actor, proof.target,
+                active_policy_version=policy.version,
             )
             decision = gate.check_and_commit(proof, current, policy)
 
@@ -163,6 +167,7 @@ class AtomicWorldStore:
                     expected.proposal_verdict,
                 )
 
+            self._before_effect_recording()
             effect = EffectRecord(
                 action=proof.action,
                 actor=proof.actor,

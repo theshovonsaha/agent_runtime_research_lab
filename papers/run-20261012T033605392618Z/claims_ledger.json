@@ -1,0 +1,78 @@
+{
+  "run_id": "run-20261012T033605392618Z",
+  "claims": [
+    {
+      "claim": "TAPR proposal accuracy was 1.000000 on this benchmark run",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "arithmetic mean of per-repetition tapr_dep_cache accuracy",
+      "tests": [
+        "tests/test_research_hardening.py"
+      ],
+      "scope": "typed synthetic scenarios only"
+    },
+    {
+      "claim": "TAPR commit accuracy was 1.000000 on this benchmark run",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "arithmetic mean of per-repetition tapr_dep_cache commit_accuracy",
+      "tests": [
+        "tests/test_research_hardening.py",
+        "tests/test_atomic_effect_boundary.py"
+      ],
+      "scope": "in-memory simulated effect boundary only"
+    },
+    {
+      "claim": "TAPR full evaluations changed by -33.043478% relative to full recomputation",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "100 * (1 - mean(TAPR full_evaluations) / mean(full_recompute full_evaluations))",
+      "scope": "does not include dependency discovery or maintenance work"
+    },
+    {
+      "claim": "Probe B recorded 36 oracle disagreements",
+      "status": "counted_from_run",
+      "evidence": "data/probe_b_cases.jsonl and data/falsification_summary.json",
+      "calculation": "count rows where oracle_disagreement is true",
+      "tests": [
+        "tests/test_research_hardening.py"
+      ]
+    },
+    {
+      "claim": "Probe C recorded 15017 proposal/commit oracle disagreements",
+      "status": "counted_from_run",
+      "evidence": "data/probe_c_cases.csv",
+      "calculation": "count records where correct is false or commit_correct is false",
+      "tests": [
+        "tests/test_research_hardening.py"
+      ]
+    },
+    {
+      "claim": "TAPR was faster than full recomputation in 1 of 9 measured profiles",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "compare per-profile arithmetic mean mean_latency_ns for tapr_dep_cache vs full_recompute",
+      "scope": "descriptive for this machine and generated workloads"
+    },
+    {
+      "claim": "TAPR cache-hit rate in high_reuse was 0.834431",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "sum(cache_hits) / sum(decisions) over matching profile/system rows",
+      "tests": [
+        "tests/test_precedence_dependencies.py"
+      ],
+      "scope": "descriptive for the recorded synthetic workload"
+    },
+    {
+      "claim": "TAPR cache-hit rate in low_reuse was 0.000000",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "sum(cache_hits) / sum(decisions) over matching profile/system rows",
+      "tests": [
+        "tests/test_precedence_dependencies.py"
+      ],
+      "scope": "descriptive for the recorded synthetic workload"
+    }
+  ]
+}

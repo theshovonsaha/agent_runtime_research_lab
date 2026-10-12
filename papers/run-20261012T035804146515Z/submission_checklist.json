@@ -1,0 +1,33 @@
+{
+  "status": "NOT_CERTIFIED_FOR_SUBMISSION",
+  "checks": [
+    {
+      "item": "venue template and requirements reviewed",
+      "status": "not_done"
+    },
+    {
+      "item": "all claims independently audited against raw outputs",
+      "status": "partial_local_calculations_only"
+    },
+    {
+      "item": "policy contract independently reviewed",
+      "status": "not_done"
+    },
+    {
+      "item": "prior-art and novelty review complete",
+      "status": "not_done"
+    },
+    {
+      "item": "independent replication completed",
+      "status": "not_done"
+    },
+    {
+      "item": "distributed/external effect adapter validation",
+      "status": "not_done"
+    },
+    {
+      "item": "all three probes reproduced from documented clean checkout",
+      "status": "local_run_pending_external_replication"
+    }
+  ]
+}

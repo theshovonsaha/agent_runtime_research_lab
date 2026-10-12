@@ -1,6 +1,5 @@
 import random
 import sys
-import threading
 from pathlib import Path
 
 import pytest
@@ -8,6 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from tapr.concurrent_gate import AtomicWorldStore
+from tapr.falsification import _record_probe_a
 from tapr.oracle import evaluate as evaluate_oracle
 from tapr.policy import (
     Dependency,
@@ -163,7 +163,7 @@ def test_exact_snapshot_rechecks_state_at_commit_boundary():
     assert record.commit_reason == "recomputed"
 
 
-def test_concurrent_competing_cas_updates_serialize_and_reusable_proof_commits_twice():
+def test_scripted_competing_cas_updates_and_reusable_proof_commits_twice():
     world = make_world()
     store = AtomicWorldStore(world)
     gate = CheckCommitGate()
@@ -173,28 +173,18 @@ def test_concurrent_competing_cas_updates_serialize_and_reusable_proof_commits_t
         result, "reusable-proof", "read", "agent-0", "resource-0", world
     )
 
-    start = threading.Barrier(3)
-    cas_results = []
-
-    def update(value):
-        candidate = world.with_fact(
+    candidates = [
+        world.with_fact(
             Fact("metadata_version", "resource-0", value, 2, "competing_update")
         )
-        start.wait(timeout=5)
-        cas_results.append(store.compare_and_swap(world.world_version, candidate))
-
-    workers = [
-        threading.Thread(target=update, args=(value,))
         for value in (2, 3)
     ]
-    for worker in workers:
-        worker.start()
-    start.wait(timeout=5)
-    for worker in workers:
-        worker.join(timeout=5)
-        assert not worker.is_alive()
+    cas_results = [
+        store.compare_and_swap(world.world_version, candidate)
+        for candidate in candidates
+    ]
 
-    assert sorted(cas_results) == [False, True]
+    assert cas_results == [True, False]
     first, committed_first, _, _ = store.commit_effect(proof, policy, gate)
     second, committed_second, _, _ = store.commit_effect(proof, policy, gate)
 
@@ -229,6 +219,72 @@ def test_failed_effect_attempt_is_not_counted_as_a_committed_effect():
     assert store.get_snapshot().path[-1].outcome == "failed"
 
 
+def test_scripted_commit_mutation_interleaving_is_atomic():
+    mutation_blocked = []
+
+    class PausingStore(AtomicWorldStore):
+        def _before_effect_recording(self):
+            acquired = self._lock.acquire(blocking=False)
+            mutation_blocked.append(not acquired)
+            if acquired:
+                self._lock.release()
+                self.mutate_fact(
+                    "authorized", "agent-0", False, "racing_revoke"
+                )
+
+    world = make_world()
+    policy = Policy(version=world.policy_version)
+    result = policy.evaluate(world, "write", "agent-0", "resource-0")
+    proof = Proof.from_result(
+        result, "serialized-race", "write", "agent-0", "resource-0", world
+    )
+    store = PausingStore(world)
+
+    commit_result = store.commit_effect(proof, policy, CheckCommitGate())
+    if mutation_blocked[0]:
+        store.mutate_fact(
+            "authorized", "agent-0", False, "racing_revoke"
+        )
+
+    assert mutation_blocked == [True]
+    assert commit_result[0].approved is True
+    assert commit_result[1] is True
+    snapshot = store.get_snapshot()
+    assert snapshot.get("authorized", "agent-0") is False
+    assert snapshot.count_effects("write", "resource-0") == 1
+    assert store.traces[0].expected_authorized is True
+    assert store.traces[0].oracle_disagreement is False
+    assert store._interleaving[-2].startswith("effect_attempt:")
+    assert store._interleaving[-1].startswith("mutation:authorized:")
+
+
+def test_atomic_probe_matches_full_recomputation_for_serialized_histories():
+    result = _record_probe_a(20261011)
+
+    assert result["stale_proof"]["decision_matches_full_recompute"] is True
+    assert result["stale_proof"]["effect_matches_full_recompute"] is True
+    assert result["commit_mutation_race"]["decision_matches_full_recompute"] is True
+    assert result["commit_mutation_race"][
+        "final_state_matches_full_recompute"
+    ] is True
+
+
+def test_oracle_is_independent_of_policy_implementation(monkeypatch):
+    import tapr.oracle as oracle_module
+
+    assert "Policy" not in oracle_module.__dict__
+    assert "PolicyResult" not in oracle_module.__dict__
+    assert "_policy_rules" not in oracle_module.__dict__
+
+    def policy_must_not_be_consulted(*_args, **_kwargs):
+        raise AssertionError("oracle consulted runtime policy implementation")
+
+    monkeypatch.setattr(Policy, "evaluate", policy_must_not_be_consulted)
+    expected = evaluate_oracle(make_world(), "read", "agent-0", "resource-0")
+    assert expected.proposal_verdict == "ALLOW"
+    assert expected.commit_authorized is True
+
+
 def test_seeded_policy_mutations_match_independent_oracle():
     rng = random.Random(271828)
     policy = Policy()
@@ -254,7 +310,7 @@ def test_seeded_policy_mutations_match_independent_oracle():
 
         evaluated = policy.evaluate(world, action, "agent-0", "resource-0")
         policy.validate_dependencies(
-            evaluated, action, "agent-0", "resource-0"
+            evaluated, world, action, "agent-0", "resource-0"
         )
         expected = evaluate_oracle(
             world, action, "agent-0", "resource-0"

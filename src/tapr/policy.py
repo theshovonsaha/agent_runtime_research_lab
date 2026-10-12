@@ -117,6 +117,7 @@ class PolicyResult:
     work_units: int
     rule_name: str
     policy_identity: str = ""
+    matched: bool = True
 
     def is_valid_in(self, world: WorldState) -> bool:
         """Return True iff all dependencies are still satisfied."""
@@ -173,7 +174,9 @@ def _policy_rules() -> List[Any]:
         ])
         if not auth.value or not scope.value:
             return PolicyResult("DENY", deps, 0, "authorization")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "authorization", matched=False
+        )
 
     def r_protected_resource(world, action, actor, target):
         """Deny destructive actions on protected or retention-held resources."""
@@ -184,7 +187,9 @@ def _policy_rules() -> List[Any]:
         deps = frozenset([Dependency.from_fact(prot), Dependency.from_fact(hold)])
         if prot.value or hold.value:
             return PolicyResult("DENY", deps, 0, "protected_resource")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "protected_resource", matched=False
+        )
 
     def r_export_after_sensitive_read(world, action, actor, target):
         """Deny export if the session already read a sensitive resource."""
@@ -196,7 +201,9 @@ def _policy_rules() -> List[Any]:
         deps = frozenset([Dependency.from_fact(sens)])
         if sens.value:
             return PolicyResult("DENY", deps, 0, "export_after_sensitive_read")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "export_after_sensitive_read", matched=False
+        )
 
     def r_retry_idempotency(world, action, actor, target):
         """Deny retry if the prior attempt already succeeded."""
@@ -206,7 +213,9 @@ def _policy_rules() -> List[Any]:
         deps = frozenset([Dependency.from_fact(prev)])
         if prev.value:
             return PolicyResult("DENY", deps, 0, "retry_idempotency")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "retry_idempotency", matched=False
+        )
 
     def r_untrusted_delegation(world, action, actor, target):
         """Deny delegation if the path tag marks it untrusted."""
@@ -216,7 +225,9 @@ def _policy_rules() -> List[Any]:
         deps = frozenset([Dependency.from_fact(tag)])
         if tag.value == "untrusted_delegation":
             return PolicyResult("DENY", deps, 0, "untrusted_delegation")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "untrusted_delegation", matched=False
+        )
 
     def r_write_escalation(world, action, actor, target):
         """Escalate write/delete/export when approval or evidence is missing."""
@@ -227,17 +238,13 @@ def _policy_rules() -> List[Any]:
         deps = frozenset([Dependency.from_fact(appr), Dependency.from_fact(evid)])
         if not appr.value or not evid.value:
             return PolicyResult("ESCALATE", deps, 0, "write_escalation")
-        return None
+        return PolicyResult(
+            "ALLOW", deps, 0, "write_escalation", matched=False
+        )
 
     def r_allow(world, action, actor, target):
-        """Default allow, pinning only conditions relevant to this action."""
-        deps = frozenset(
-            Dependency.from_fact(_require_fact(world, name, subject))
-            for name, subject in Policy.required_fact_keys(
-                action, actor, target, "allow"
-            )
-        )
-        return PolicyResult("ALLOW", deps, 0, "allow")
+        """Default allow; prior non-matching rules already pinned their facts."""
+        return PolicyResult("ALLOW", frozenset(), 0, "allow")
 
     return [
         r_authorization,
@@ -284,47 +291,35 @@ class Policy:
             json.dumps(payload, sort_keys=True).encode()
         ).hexdigest()
 
-    @staticmethod
     def required_fact_keys(
-        action: str, actor: str, target: str, rule_name: str
+        self, world: WorldState, action: str, actor: str, target: str,
+        rule_name: str,
     ) -> FrozenSet[Tuple[str, str]]:
-        """Return facts that must be pinned for the fired policy branch.
+        """Derive required fact keys by replaying the actual rule evaluators.
 
-        The branch dependencies include the conditions that produced a
-        denial/escalation. An allow pins every condition that could change
-        that action's verdict, but excludes facts irrelevant to that action.
+        Continue through prior matching rules while deriving the prefix
+        contract for a later result, so the contract remains valid when the
+        current state would now trigger one of those earlier rules.
         """
-        branches = {
-            "authorization": {("authorized", actor), ("parent_scope_ok", actor)},
-            "protected_resource": {("protected", target), ("retention_hold", target)},
-            "export_after_sensitive_read": {("prior_sensitive_read", actor)},
-            "retry_idempotency": {("prior_effect_succeeded", target)},
-            "untrusted_delegation": {("path_tag", actor)},
-            "write_escalation": {("approval", actor), ("evidence_fresh", target)},
-        }
-        if rule_name != "allow":
-            return frozenset(branches.get(rule_name, {
-                ("authorized", actor), ("parent_scope_ok", actor)
-            }))
-
-        keys = {("authorized", actor), ("parent_scope_ok", actor)}
-        if action in {"delete", "export"}:
-            keys.update({("protected", target), ("retention_hold", target)})
-        if action == "export":
-            keys.add(("prior_sensitive_read", actor))
-        if action == "retry":
-            keys.add(("prior_effect_succeeded", target))
-        if action == "delegate":
-            keys.add(("path_tag", actor))
-        if action in {"write", "delete", "export"}:
-            keys.update({("approval", actor), ("evidence_fresh", target)})
-        return frozenset(keys)
+        dependencies: set[Dependency] = set()
+        for rule in self._rules:
+            result = rule(world, action, actor, target)
+            if result is None:
+                continue
+            dependencies.update(result.dependencies)
+            if result.rule_name == rule_name:
+                return frozenset(
+                    (dependency.name, dependency.subject)
+                    for dependency in dependencies
+                )
+        raise ValueError(f"Policy rule {rule_name!r} is not applicable")
 
     def validate_dependencies(
-        self, result: PolicyResult, action: str, actor: str, target: str
+        self, result: PolicyResult, world: WorldState, action: str,
+        actor: str, target: str,
     ) -> None:
         required = self.required_fact_keys(
-            action, actor, target, result.rule_name
+            world, action, actor, target, result.rule_name
         )
         declared = {(d.name, d.subject) for d in result.dependencies}
         missing = required - declared
@@ -354,8 +349,10 @@ class Policy:
 
         for rule in self._rules:
             result = rule(world, action, actor, target)
-            if result is not None:
-                all_deps.update(result.dependencies)
+            if result is None:
+                continue
+            all_deps.update(result.dependencies)
+            if result.matched:
                 return PolicyResult(
                     result.verdict,
                     frozenset(all_deps),
@@ -367,33 +364,11 @@ class Policy:
         raise RuntimeError("Policy exhausted without verdict")
 
 
-# ---------------------------------------------------------------------------
-# Reference oracle (separate implementation of the same policy contract)
-# ---------------------------------------------------------------------------
-
 def reference_oracle(world: WorldState, action: str, actor: str,
                      target: str) -> str:
-    """Conservative reference implementation.
-
-    Deliberately written without using the Policy class or _policy_rules(),
-    to serve as an independent oracle for correctness testing.  If oracle
-    and Policy ever disagree, one of them has a bug or they have drifted.
-    """
-    def g(name: str, subject: str, default: Any = None) -> Any:
-        return world.get(name, subject, default)
-
-    if not g("authorized", actor, False) or not g("parent_scope_ok", actor, True):
-        return "DENY"
-    if action in ("delete", "export") and (
-            g("protected", target, False) or g("retention_hold", target, False)):
-        return "DENY"
-    if action == "export" and g("prior_sensitive_read", actor, False):
-        return "DENY"
-    if action == "retry" and g("prior_effect_succeeded", target, False):
-        return "DENY"
-    if action == "delegate" and g("path_tag", actor, "ordinary") == "untrusted_delegation":
-        return "DENY"
-    if action in ("write", "delete", "export") and (
-            not g("approval", actor, True) or not g("evidence_fresh", target, True)):
-        return "ESCALATE"
-    return "ALLOW"
+    """Compatibility wrapper around the independent state-only oracle."""
+    try:
+        from .oracle import evaluate
+    except ImportError:
+        from tapr.oracle import evaluate
+    return evaluate(world, action, actor, target).proposal_verdict
