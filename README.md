@@ -31,7 +31,7 @@ oracle also leave policy-specification and workload-validity risks.
 <!-- TAPR_RESULTS:BEGIN -->
 ## Data-derived benchmark snapshot
 
-Generated from `results/hardening-20261012T035955Z` (seed `20261012`; source revision `1c4fa839036b5dfe16d610ab930c7dc08a6748d0`). These are descriptive synthetic-run measurements, not production guarantees.
+Generated from `results/hardening-20261012T065200Z` (seed `20261011`; source revision `e11585a8ce634252aef8a428f471fe5a20160946`). These are descriptive synthetic-run measurements, not production guarantees.
 
 - Proposal accuracy: full recompute 100.00%; TAPR 100.00%.
 - Commit-boundary accuracy: full recompute 100.00%; TAPR 100.00%.
@@ -40,10 +40,10 @@ Generated from `results/hardening-20261012T035955Z` (seed `20261012`; source rev
 
 | Workload profile | Decisions | Full-recompute cache hit | TAPR cache hit | Difference (percentage points) |
 |---|---:|---:|---:|---:|
-| high_reuse | 1052 | 0.00% | 83.27% | 83.27 |
+| high_reuse | 1063 | 0.00% | 83.44% | 83.44 |
 | low_reuse | 176 | 0.00% | 0.00% | 0.00 |
 
-Raw metrics: [results/hardening-20261012T035955Z](results/hardening-20261012T035955Z/REPORT.md); integrity data: [results/hardening-20261012T035955Z/README_metrics.json](results/hardening-20261012T035955Z/README_metrics.json).
+Raw metrics: [results/hardening-20261012T065200Z](results/hardening-20261012T065200Z/REPORT.md); integrity data: [results/hardening-20261012T065200Z/README_metrics.json](results/hardening-20261012T065200Z/README_metrics.json).
 <!-- TAPR_RESULTS:END -->
 
 ## Reproduction

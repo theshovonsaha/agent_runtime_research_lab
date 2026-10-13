@@ -1,0 +1,98 @@
+{
+  "run_id": "run-20261012T040916479735Z",
+  "claims": [
+    {
+      "claim": "TAPR proposal accuracy was 1.000000 on this benchmark run",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "arithmetic mean of per-repetition tapr_dep_cache accuracy",
+      "tests": [
+        "tests/test_research_hardening.py"
+      ],
+      "scope": "typed synthetic scenarios only"
+    },
+    {
+      "claim": "TAPR commit accuracy was 1.000000 on this benchmark run",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "arithmetic mean of per-repetition tapr_dep_cache commit_accuracy",
+      "tests": [
+        "tests/test_research_hardening.py",
+        "tests/test_atomic_effect_boundary.py"
+      ],
+      "scope": "in-memory simulated effect boundary only"
+    },
+    {
+      "claim": "Mean TAPR commit false-denials per repetition were 0.000000",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "arithmetic mean of per-repetition tapr_dep_cache commit_false_denies",
+      "tests": [
+        "tests/test_policy_mismatch_package.py",
+        "tests/test_benchmark_runtime_isolation.py"
+      ],
+      "scope": "in-memory simulated commit boundary only"
+    },
+    {
+      "claim": "TAPR full evaluations were reduced by 33.043478% relative to full recomputation",
+      "status": "calculated_from_run",
+      "evidence": "data/run_metrics.csv",
+      "calculation": "100 * (1 - mean(TAPR full_evaluations) / mean(full_recompute full_evaluations))",
+      "tests": [
+        "tests/test_benchmark.py::BenchmarkRunnerTests::test_run_once_produces_records",
+        "tests/test_research_hardening.py::test_irrelevant_fact_change_preserves_reuse"
+      ],
+      "scope": "does not include dependency discovery or maintenance work"
+    },
+    {
+      "claim": "Probe B recorded 0 candidate-variant oracle disagreements",
+      "status": "counted_from_run",
+      "evidence": "data/probe_b_cases.jsonl and data/falsification_summary.json",
+      "calculation": "sum per-system disagreements for full_recompute, tapr_dep_cache, and exact_snapshot_cache",
+      "tests": [
+        "tests/test_research_hardening.py",
+        "tests/test_precedence_dependencies.py"
+      ]
+    },
+    {
+      "claim": "Probe C recorded 0 candidate-variant proposal/commit oracle disagreements",
+      "status": "counted_from_run",
+      "evidence": "data/probe_c_cases.csv",
+      "calculation": "sum per-system proposal/commit disagreements for full_recompute, tapr_dep_cache, and exact_snapshot_cache",
+      "tests": [
+        "tests/test_precedence_dependencies.py",
+        "tests/test_benchmark_runtime_isolation.py"
+      ]
+    },
+    {
+      "claim": "TAPR was faster than full recomputation in 1 of 9 measured profiles",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "compare decision-weighted per-profile mean_latency_ns for tapr_dep_cache vs full_recompute",
+      "tests": [
+        "tests/test_benchmark.py::BenchmarkRunnerTests::test_run_once_produces_records"
+      ],
+      "scope": "descriptive for this machine and generated workloads"
+    },
+    {
+      "claim": "TAPR cache-hit rate in high_reuse was 0.834431",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "sum(cache_hits) / sum(decisions) over matching profile/system rows",
+      "tests": [
+        "tests/test_precedence_dependencies.py"
+      ],
+      "scope": "descriptive for the recorded synthetic workload"
+    },
+    {
+      "claim": "TAPR cache-hit rate in low_reuse was 0.000000",
+      "status": "calculated_from_run",
+      "evidence": "data/probe_c_metrics.csv",
+      "calculation": "sum(cache_hits) / sum(decisions) over matching profile/system rows",
+      "tests": [
+        "tests/test_precedence_dependencies.py"
+      ],
+      "scope": "descriptive for the recorded synthetic workload"
+    }
+  ]
+}

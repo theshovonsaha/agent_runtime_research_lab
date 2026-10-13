@@ -1,0 +1,113 @@
+{
+  "command_line": [
+    "/Users/theshovonsaha/Developer/Github/agent_runtime_research_lab/.venv/bin/python3",
+    "src/sweep.py",
+    "--out",
+    "results/hardening-20261012T040909Z/sweep.csv",
+    "--repeats",
+    "2",
+    "--seed",
+    "20261011",
+    "--quick"
+  ],
+  "configuration": {
+    "mixes": [
+      "uniform",
+      "adversarial",
+      "mutation_heavy",
+      "noise_heavy"
+    ],
+    "proof_costs": [
+      0,
+      8
+    ],
+    "quick": true,
+    "repeats": 2,
+    "sizes": [
+      100,
+      300
+    ],
+    "systems": [
+      "full_recompute",
+      "tapr_dep_cache",
+      "exact_snapshot_cache",
+      "coarse_cache",
+      "stale_proof_accept"
+    ]
+  },
+  "dependencies": {
+    "matplotlib": "3.10.8",
+    "numpy": "2.5.4",
+    "pytest": "9.1.1"
+  },
+  "generated_at_utc": "2026-10-12T04:09:13.522902+00:00",
+  "manifest_checksum_scope": "sweep_manifest.json excludes its own checksum",
+  "output_sha256": {
+    "sweep.csv": "219a85359b0cfe7ba3abbc110bd49864e897cef57ebd99ced15bdb5742ab279b"
+  },
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "seed": 20261011,
+  "source_revision": "e11585a8ce634252aef8a428f471fe5a20160946",
+  "source_sha256": {
+    "README.md": "ed585db4a8fd5387de6a9daa5bddd6cb1e2c5c47cd66ff9626f9c28a8ff1bfc4",
+    "RESEARCH_CHARTER.md": "7069634561732ba9692017160e6a6498e1c15a77ca957e501d448ed581ec2b7b",
+    "reproduce_research.sh": "2a3b21dc15247cc0f01353d2d2755c31b1e2affd36df2e37e1b1ae6897410816",
+    "requirements.txt": "3207915b9c9c186c4c62e1b0c8e6862f9df7394516b058d35d04063c914c12d4",
+    "run_lab.sh": "b1eaa5af798a76ac93b07b371d612b997e2b862f37e1eabbc5893b6307c96947",
+    "src/adapters/opa_cedar_adapters.py": "8f72ae19f57d29aaa183aa73941dd5eda32fe7e80650dd7ec9de251599dc0167",
+    "src/analyze.py": "860a2260534f0169e45f60ed30d099a0bfcec1753b495db8ba99620a552625b0",
+    "src/audit.py": "9f2c0f5515452222bc29204f627de948bf0fb1f181611c2830efccbf3331a02e",
+    "src/benchmark.py": "6498f62f57d20bad156bf31617749f609bb0aeaa481d26b9a66dbcfeaab8bf20",
+    "src/concurrent_harness.py": "4fc5dc6124bf92064997b3d64554b6f37da9cba9bda6fbc147bb6aa6fb5de86c",
+    "src/falsification.py": "0b1afcd54547b8cab32e54a8194df09bf295984521aa134227b2164b84da32c7",
+    "src/intent_extractor.py": "2fddcbf1f2a6a0b4349e5b19deadce3d0f4eae7ed704d5098ff57a4082cfb215",
+    "src/interactive_cli.py": "ee6d8f2f758314012e1a76d8454b2300963977010a43f08fb2316f7e0fde8260",
+    "src/llm_evaluator.py": "64b0d4858ace44ef8fe37704a5a32240f94b8423973244b608ad8f4c1eb8ca4d",
+    "src/paper.py": "fc5b4520bcce6ab5d407d9b4c3d12f914ff8f76cdc7f9ea163225a0edc2996a2",
+    "src/pdf_report.py": "7761c4691c6a7696d25232fdc372dc6d4cab31d894e0b1a0fe45dc19aee14d0d",
+    "src/policy.py": "8baa56f22c4add20f91b74416c46baf1e7900ee784fd7bde6aff3777320c593a",
+    "src/proof.py": "d36f9529c0225ffdeee8b1d5cc3a744a755f6baed5f0df482a0978817d7d512e",
+    "src/runtime.py": "7f815a3b512d71f51e22ffc2ee88c68d429942e77aa8578f1556e23b3cd801a8",
+    "src/scenarios.py": "f977d39ad7ea6e831ccebf47c4a06a52f0b2345584412775170d90507e79e299",
+    "src/svg_chart.py": "4dc6b90abf78a1c9435c6f63c1dbd532fcd5fd873622c51b8fdc771d909dfb80",
+    "src/sweep.py": "1be0653a96d877f838be71c92f39d92ed9845086fc185519492bda60ac59041a",
+    "src/tapr/__init__.py": "cd831757c2cb232eec7e12f3faf3203bb2a83d309fb0bb2aa58465f2fb4d5289",
+    "src/tapr/audit.py": "2229fb2df2f154897272e8168ae75a282c7730fdaad89e479939d8d331ee2915",
+    "src/tapr/charts.py": "4dc6b90abf78a1c9435c6f63c1dbd532fcd5fd873622c51b8fdc771d909dfb80",
+    "src/tapr/concurrent_gate.py": "41f0e9ffa6683d4603bf8fd84b12f0610baff5f5a6ef06af00128dceed16ae4a",
+    "src/tapr/falsification.py": "2596164b01e12f4d0fa7160f1f663135f78467167b98e5d2ab4b89ca6f0aa497",
+    "src/tapr/intent.py": "e82dadf5b25b8314fced058d3771097bc016018de20d69c38d776f3df6ecc53f",
+    "src/tapr/llm_client.py": "b129adf07fe9afc57d0e47671118f59fa41bdd3dc641296ef056aa5b15a21cfa",
+    "src/tapr/oracle.py": "3104471badac38fe8540e18aa54b8f8a4c5b88612df9cb2d71a6058cce5efc82",
+    "src/tapr/pdf_compiler.py": "554c85c86f26c08b58f7494c162e4c74f522bdd74ca35c1c3671196089dd2e0d",
+    "src/tapr/policy.py": "e939ebde439b91405991a9b226d1e5803375568d498ed31fc36f3a71526e37b8",
+    "src/tapr/proof.py": "bca39c92da4a1712bffacc2d54a8b7b2ea03c3067186ce44f01a1953731d471f",
+    "src/tapr/runtime.py": "ca4c9044f1c9e8c853de7eae59e12b1886e003700d476d39252df9c515f82468",
+    "src/tapr/scenarios.py": "d2b174c95e130bb406468906377835abc99eacd764315e9b7e8cbb423b0b2ead",
+    "src/tapr/world.py": "5da8ec524680278184dc2d813cae1717a9d951f5db624431a3e0feac83762d3f",
+    "src/update_readme_metrics.py": "451270e490d7e9219af2dbb743813acb961aea4871e04857d9d0c7ef01bbb43d",
+    "src/world.py": "08c222931664c15ad548e97c4b3674d1608b03e8b1b08becf540c67e8cc0ba8f",
+    "tests/test_atomic_effect_boundary.py": "928635704104034fc7731ea64ccac80a71fd0eb763323138b6212cf17ff123d9",
+    "tests/test_benchmark.py": "fa1792a13111c4add3371181a7da2ffe0caf82cbde6759f34121c664435237cb",
+    "tests/test_benchmark_runtime_isolation.py": "6e86c88bfdcf67e844e48cbf4ff20f99aed2fbe7a2b8f45c0b765cdd4f4b5342",
+    "tests/test_commit_boundary.py": "7f80a755a69eb17e97bd67b379a1a5ffd9df4646c839a29616cd46879c0d28c0",
+    "tests/test_deterministic_toctou.py": "2f86f7a0add7d257b6e2678b5061659eab6c0b4eb42175dc15c1a7e873d00809",
+    "tests/test_extended.py": "3304dc91ec76bc9c35c4e1dd49abb81e299d78e7cd7ae31e1da3bb6c49dc8493",
+    "tests/test_flat_policy_identity.py": "7df80148cf2ad8bebfed5ee83108ed9fcde9e816973f3b5d7a9752e6e83d3a3a",
+    "tests/test_policy.py": "e5e24672966eab6b7696818697601d9b479b79bbf9cfe01899d448f84b305474",
+    "tests/test_policy_mismatch_package.py": "b831d2c78b4a14c60d203c2c5861936cffda96daa8f214705ef8a8dd26672e7f",
+    "tests/test_policy_replacement.py": "c0f55b51d7abb96d27bd96518150f79c3e93a101233dbd704b907e847c414639",
+    "tests/test_policy_version_rollback.py": "8811b1082fd4465cbc6aad0ba6175ded49a1ba2741718254771ea9acec93e8ce",
+    "tests/test_precedence_dependencies.py": "fb20241a4123213d671635a591a51290f934dc00566dcb9e5d7b7b09501e7d2b",
+    "tests/test_research_hardening.py": "44eb137b74c3a25182d54363c0ff58b05ba9c6accc515c5d5bd27e45ce852b6c",
+    "tests/test_runtime.py": "9d434ae20e43063bc86dbc3f3efbef640d60ab0d943dd438b1f5cec1c75d5b1a",
+    "tests/test_same_version_policy_replacement.py": "9b0b5404dca2b827947392b47ede1173493df32c4b72bd0365829bb92cbe07a2",
+    "tests/test_scenarios.py": "8d2ed28402a59306fb55b862e5276a1d6519dbf5756200147d31d0febe5ebf95",
+    "tests/test_tapr_proofs.py": "51a810a481bf4b627553f7f41bc67f8e40076a6dc861c60540c9a4c2d79cf6d7",
+    "tests/test_unittest_bridge.py": "fda8daac0f454ab8b00ed25f667dbb447ecb91a13b96763ff30ca734056e043a",
+    "tests/test_world.py": "892b4f7904a1fd00a40fb3eba8c66c59900465fc9eb2a48b4e012c6f6f491dac"
+  },
+  "worktree_dirty": true,
+  "worktree_status": "M README.md\n?? results/hardening-20261012T040909Z/"
+}
